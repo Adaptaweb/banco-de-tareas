@@ -1,0 +1,39 @@
+name: banco-de-tareas
+services:
+  banco-app:
+    cpu_shares: 10
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    image: banco-de-tareas:latest
+    labels:
+      icon: https://static.wikia.nocookie.net/minecraft_gamepedia/images/4/41/Chest.gif/revision/latest?cb=20191219163201
+    ports:
+      - target: 5000
+        published: "5000"
+        protocol: tcp
+    restart: unless-stopped
+    volumes:
+      - banco-db-data:/app
+    environment:
+      - TELEGRAM_TOKEN=poner_token_aqui
+      - TELEGRAM_CHAT_ID=poner_chat_id_aqui
+      - HA_IP=192.168.1.x
+    network_mode: bridge
+
+volumes:
+  banco-db-data:
+
+x-casaos:
+  author: Adaptaweb
+  category: self
+  hostname: ""
+  icon: https://static.wikia.nocookie.net/minecraft_gamepedia/images/4/41/Chest.gif/revision/latest?cb=20191219163201
+  index: /
+  is_uncontrolled: false
+  port_map: "5000"
+  scheme: http
+  store_app_id: banco-de-tareas
+  title:
+    custom: Banco de Tareas
