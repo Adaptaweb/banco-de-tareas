@@ -83,6 +83,7 @@ cd /home/alejandro/banco-de-tareas
 git pull
 docker build -t banco-de-tareas:latest .
 docker create --name temp_deploy banco-de-tareas:latest
+rm -rf /DATA/AppData/BancoTareas/dist/server/chunks/
 for dir in dist src node_modules public; do
   docker cp temp_deploy:/app/"$dir" /DATA/AppData/BancoTareas/
 done
