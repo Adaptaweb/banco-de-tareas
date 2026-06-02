@@ -27,7 +27,7 @@ export const GET: APIRoute = async ({ url }) => {
     s.tareas_aprobadas = todas;
     s.tiempo_hoy = tiempoTotal;
 
-    saveState(hoy, tiempoTotal, todas, db.tareas_activas);
+    saveState(hoy, tiempoTotal, todas, db.tareas_activas, 'aprobada');
     saveDailyHistory(hoy, tiempoTotal, todas);
     setMissionState('aprobada');
 

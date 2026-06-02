@@ -11,7 +11,7 @@ export const GET: APIRoute = async () => {
   db.tareas_aprobadas = [];
   db.tiempo_hoy = 0;
   db.fecha = hoy;
-  saveState(hoy, 0, [], db.tareas_activas);
+  saveState(hoy, 0, [], db.tareas_activas, 'esperando');
 
   reloadFromDb();
 

@@ -50,13 +50,15 @@ export function reloadFromDb() {
     state.tareas_aprobadas = [];
     state.tiempo_hoy = 0;
     state.fecha_actual = hoy;
-    saveState(hoy, 0, [], db.tareas_activas);
+    state.estado_mision = 'esperando';
+    saveState(hoy, 0, [], db.tareas_activas, 'esperando');
     console.log('🔄 Nuevo día detectado: Misiones reiniciadas.');
   }
 
   state.tareas_aprobadas = db.tareas_aprobadas;
   state.tiempo_hoy = db.tiempo_hoy;
   state.fecha_actual = db.fecha;
+  state.estado_mision = db.estado_mision;
 }
 
 export function startBot() {
@@ -95,9 +97,11 @@ export function startBot() {
         const dbState = loadState();
         const task = dbState.tareas_activas.find(t => t.nombre === tareaNombre);
         const minutosGanados = task?.tiempo || 0;
+        const numTasks = dbState.tareas_activas.length;
         state.tiempo_hoy += minutosGanados;
 
-        saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbState.tareas_activas);
+        state.estado_mision = 'aprobada';
+        saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbState.tareas_activas, 'aprobada');
         saveDailyHistory(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas);
 
         // Home Assistant webhook
@@ -126,6 +130,9 @@ export function startBot() {
       state.estado_mision = 'rechazada';
       await ctx.editMessageText('❌ RECHAZADA');
     }
+
+    const dbSt = loadState();
+    saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbSt.tareas_activas, state.estado_mision);
 
     await ctx.answerCbQuery();
   });

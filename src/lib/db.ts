@@ -31,7 +31,8 @@ function initTables() {
       id INTEGER PRIMARY KEY,
       fecha TEXT,
       tiempo_hoy INTEGER,
-      tareas_aprobadas TEXT
+      tareas_aprobadas TEXT,
+      estado_mision TEXT DEFAULT 'esperando'
     );
     CREATE TABLE IF NOT EXISTS historial_diario (
       fecha TEXT PRIMARY KEY,
@@ -89,7 +90,7 @@ function seedDefaults() {
 
   const hoy = new Date().toISOString().slice(0, 10);
   db.prepare(
-    "INSERT INTO estado_actual (id, fecha, tiempo_hoy, tareas_aprobadas) VALUES (1, ?, 0, '[]')"
+    "INSERT INTO estado_actual (id, fecha, tiempo_hoy, tareas_aprobadas, estado_mision) VALUES (1, ?, 0, '[]', 'esperando')"
   ).run(hoy);
 
   const defaults = [
@@ -110,24 +111,26 @@ function seedDefaults() {
 
 export function loadState() {
   const d = getDb();
-  const row = d.prepare('SELECT fecha, tiempo_hoy, tareas_aprobadas FROM estado_actual WHERE id = 1').get() as { fecha: string; tiempo_hoy: number; tareas_aprobadas: string } | undefined;
+  const row = d.prepare('SELECT fecha, tiempo_hoy, tareas_aprobadas, estado_mision FROM estado_actual WHERE id = 1').get() as { fecha: string; tiempo_hoy: number; tareas_aprobadas: string; estado_mision: string } | undefined;
   const fecha = row?.fecha || new Date().toISOString().slice(0, 10);
   const tiempo_hoy = row?.tiempo_hoy || 0;
   const tareas_aprobadas: string[] = row ? JSON.parse(row.tareas_aprobadas) : [];
+  const estado_mision = row?.estado_mision || 'esperando';
   const tareas_activas = d.prepare('SELECT nombre, icono, tiempo FROM tareas_activas').all() as { nombre: string; icono: string; tiempo: number }[];
-  return { fecha, tiempo_hoy, tareas_aprobadas, tareas_activas };
+  return { fecha, tiempo_hoy, tareas_aprobadas, tareas_activas, estado_mision };
 }
 
 export function saveState(
   fecha: string,
   tiempo_hoy: number,
   tareas_aprobadas: string[],
-  tareas_activas: { nombre: string; icono: string; tiempo: number }[]
+  tareas_activas: { nombre: string; icono: string; tiempo: number }[],
+  estado_mision: string = 'esperando'
 ) {
   const d = getDb();
   d.prepare(
-    'INSERT OR REPLACE INTO estado_actual (id, fecha, tiempo_hoy, tareas_aprobadas) VALUES (1, ?, ?, ?)'
-  ).run(fecha, tiempo_hoy, JSON.stringify(tareas_aprobadas));
+    'INSERT OR REPLACE INTO estado_actual (id, fecha, tiempo_hoy, tareas_aprobadas, estado_mision) VALUES (1, ?, ?, ?, ?)'
+  ).run(fecha, tiempo_hoy, JSON.stringify(tareas_aprobadas), estado_mision);
 
   d.prepare('DELETE FROM tareas_activas').run();
   const insert = d.prepare('INSERT INTO tareas_activas (nombre, icono, tiempo) VALUES (?, ?, ?)');
