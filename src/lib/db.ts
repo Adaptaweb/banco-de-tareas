@@ -1,11 +1,9 @@
 import Database from 'better-sqlite3';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import fs from 'fs';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DB_PATH = path.resolve(__dirname, '../../datos_cajero.db');
-const SLIDESHOW_DIR = path.resolve(__dirname, '../../public/slideshow');
+const DB_PATH = path.resolve(process.cwd(), 'datos_cajero.db');
+const SLIDESHOW_DIR = path.resolve(process.cwd(), 'public/slideshow');
 
 let db: Database.Database;
 
