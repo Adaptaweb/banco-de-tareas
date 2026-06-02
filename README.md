@@ -46,6 +46,54 @@ docker build -t banco-de-tareas .
 docker run -d -p 5000:5000 --env-file .env --name banco banco-de-tareas
 ```
 
+## Deploy en Casa OS (Raspberry Pi)
+
+```bash
+cd /home/alejandro
+git clone https://github.com/Adaptaweb/banco-de-tareas.git
+cd banco-de-tareas
+
+# Buildear imagen
+docker build -t banco-de-tareas:latest .
+
+# Pre-poblar bind mount con runtime files
+docker create --name temp banco-de-tareas:latest
+mkdir -p /DATA/AppData/BancoTareas
+docker cp temp:/app/. /DATA/AppData/BancoTareas/
+docker rm temp
+
+# Configurar compose en Casa OS (panel web → Custom App)
+# Editar TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, HA_IP desde la UI
+```
+
+### Actualizar
+
+Usar el script `deploy.sh`:
+
+```bash
+cd /home/alejandro/banco-de-tareas
+chmod +x deploy.sh
+./deploy.sh
+```
+
+O manualmente:
+
+```bash
+cd /home/alejandro/banco-de-tareas
+git pull
+docker build -t banco-de-tareas:latest .
+docker create --name temp_deploy banco-de-tareas:latest
+for dir in dist src node_modules public; do
+  docker cp temp_deploy:/app/"$dir" /DATA/AppData/BancoTareas/
+done
+for f in astro.config.mjs package.json package-lock.json; do
+  docker cp temp_deploy:/app/"$f" /DATA/AppData/BancoTareas/
+done
+docker rm temp_deploy
+docker compose down
+docker compose up -d
+```
+
 ## Rutas principales
 
 | Ruta | Método | Propósito |
