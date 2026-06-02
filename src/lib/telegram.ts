@@ -130,11 +130,18 @@ export function startBot() {
       const dbOk = loadState();
       saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbOk.tareas_activas, 'aprobada');
     } else if (data === 'no') {
+      if (hoy !== state.fecha_actual) {
+        saveDailyHistory(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas);
+        state.tareas_aprobadas = [];
+        state.tiempo_hoy = 0;
+        state.fecha_actual = hoy;
+      }
+
       state.estado_mision = 'rechazada';
       await ctx.editMessageText('❌ RECHAZADA');
 
       const dbNo = loadState();
-      saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbNo.tareas_activas, 'rechazada');
+      saveState(state.fecha_actual, dbNo.tiempo_hoy, dbNo.tareas_aprobadas, dbNo.tareas_activas, 'rechazada');
     }
 
     await ctx.answerCbQuery();
