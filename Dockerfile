@@ -15,4 +15,4 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/src ./src
 COPY --from=build /app/astro.config.mjs ./
 EXPOSE 5000
-CMD npx concurrently -n bot,web "npx tsx src/telegram-bot.ts" "node dist/server/entry.mjs"
+CMD npx concurrently -n bot,web "sh -c 'while true; do npx tsx src/telegram-bot.ts && break || sleep 10; done'" "node dist/server/entry.mjs"

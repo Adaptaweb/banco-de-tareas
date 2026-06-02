@@ -14,11 +14,6 @@ services:
         published: "5000"
         protocol: tcp
     restart: unless-stopped
-    command: >
-      sh -c "
-        (while true; do npx tsx src/telegram-bot.ts && break || sleep 10; done) &
-        node dist/server/entry.mjs
-      "
     volumes:
       - type: bind
         source: /DATA/AppData/BancoTareas
