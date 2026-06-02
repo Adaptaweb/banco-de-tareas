@@ -83,6 +83,7 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
     }
 
     aplicarTema(savedTheme);
+    window.themeListo = true;
 
     window.cambiarTema = function(tema) {
       aplicarTema(tema);

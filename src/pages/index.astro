@@ -44,10 +44,10 @@ const total = tareas.length;
     </div>
   </div>
 
-  <audio id="audioClic" preload="auto" src="/sounds/minecraft/menuclick.mp3"></audio>
-  <audio id="audioMoneda" preload="auto" src="/sounds/minecraft/moneda.mp3"></audio>
-  <audio id="audioError" preload="auto" src="/sounds/minecraft/error.mp3"></audio>
-  <audio id="audioVictory" preload="auto" src="/sounds/minecraft/victory.mp3"></audio>
+  <audio id="audioClic" preload="none"></audio>
+  <audio id="audioMoneda" preload="none"></audio>
+  <audio id="audioError" preload="none"></audio>
+  <audio id="audioVictory" preload="none"></audio>
 
   <script>
     let ultimoEstadoProcesado = 'esperando';
@@ -67,13 +67,37 @@ const total = tareas.length;
     document.addEventListener('click', habilitarAudio);
     document.addEventListener('touchstart', habilitarAudio);
     function spawnConfetti() {
-      const emojis = ['🎆', '✨', '💎', '⭐', '🎇'];
-      const el = document.createElement('div');
-      el.className = 'confetti';
-      el.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-      el.style.cssText = 'position:fixed;font-size:25px;z-index:1;pointer-events:none;left:' + (Math.random()*100) + 'vw;top:-5vh;animation:confetti-fall 3s linear forwards;';
-      document.body.appendChild(el);
-      setTimeout(() => el.remove(), 3000);
+      const colors = ['#ff0','#f0f','#0ff','#f00','#0f0','#00f','#ff8800','#ff4488','#fff'];
+      for (let i = 0; i < 5; i++) {
+        const el = document.createElement('div');
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const size = 5 + Math.random() * 8;
+        const left = Math.random() * 100;
+        const dur = 2 + Math.random() * 2;
+        const rot = Math.random() * 720;
+        const shape = Math.random() > 0.5 ? '50%' : '0';
+        el.style.cssText = `position:fixed;width:${size}px;height:${size}px;background:${color};border-radius:${shape};left:${left}vw;top:-10px;z-index:100;pointer-events:none;will-change:transform,opacity;animation:confetti-fall ${dur}s linear forwards;transform:rotate(${rot}deg);`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), dur * 1000);
+      }
+    }
+    function spawnFirework() {
+      const cx = 10 + Math.random() * 80;
+      const cy = 10 + Math.random() * 40;
+      const colors = ['#ff0','#f44','#4f4','#44f','#f4f','#4ff','#ff8800','#fff'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const count = 25 + Math.floor(Math.random() * 20);
+      for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        const angle = (i / count) * Math.PI * 2;
+        const dist = 60 + Math.random() * 100;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        const size = 3 + Math.random() * 4;
+        el.style.cssText = `position:fixed;width:${size}px;height:${size}px;background:${color};border-radius:50%;left:${cx}vw;top:${cy}vh;z-index:100;pointer-events:none;will-change:transform,opacity;--dx:${dx}px;--dy:${dy}px;animation:firework-burst 1.2s ease-out forwards;`;
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 1200);
+      }
     }
     function actualizarReloj() {
       const ahora = new Date();
@@ -108,8 +132,19 @@ const total = tareas.length;
           if (!finalActivo) {
             finalActivo = true; aVictory.play();
             document.body.classList.add('victory-mode');
-            contenido.innerHTML = "<div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-gold);border-radius:var(--radius);background:var(--color-surface);'><h2 style='color:var(--color-gold);font-family:var(--font-display);font-size:1.1rem;margin-bottom:8px;'>META FINAL!</h2><p style='color:var(--color-emerald);font-size:1.2rem;font-weight:600;'>" + data.total_tareas + "/" + data.total_tareas + " MISIONES LOGRADAS</p></div>";
+            const horaFin = new Date().toLocaleTimeString('es-CL');
+            const listaTareas = data.aprobadas.map(t => '<span class="victory-task-item">' + t + '</span>').join('');
+            contenido.innerHTML = "<div class='status victory-card' style='width:100%;'>"
+              + "<h2>🏆 META FINAL!</h2>"
+              + "<p class='victory-count'>" + data.total_tareas + "/" + data.total_tareas + " MISIONES LOGRADAS</p>"
+              + "<div class='victory-stats'>"
+              + "<span>⏱ " + data.tiempo_formato + "</span>"
+              + "<span>🕐 " + horaFin + "</span>"
+              + "</div>"
+              + "<div class='victory-tasks'>" + listaTareas + "</div>"
+              + "</div>";
             setInterval(spawnConfetti, 300);
+            setInterval(spawnFirework, 1500);
           }
         } else {
           data.aprobadas.forEach(tarea => {
@@ -129,15 +164,20 @@ const total = tareas.length;
         setTimeout(pollEstado, 1500);
       }).catch(() => { setTimeout(pollEstado, 3000); });
     }
-    pollEstado();
+    (function esperarTema() {
+      if (window.themeListo) pollEstado();
+      else setTimeout(esperarTema, 30);
+    })();
     let timeoutInactivity, slideshowInterval;
     const TIME_INACTIVITY = 60000;
-    let isSlideshowActive = false, imagesList = [], currentImageIndex = 0;
+    let isSlideshowActive = false, imagesList = [], orientationCache = {}, playlist = [], currentSlideIndex = 0;
+
     function resetInactivityTimer() {
       if (isSlideshowActive) hideSlideshow();
       clearTimeout(timeoutInactivity);
       timeoutInactivity = setTimeout(startSlideshow, TIME_INACTIVITY);
     }
+
     function hideSlideshow() {
       isSlideshowActive = false;
       const c = document.getElementById('slideshow-container');
@@ -145,23 +185,95 @@ const total = tareas.length;
       setTimeout(() => { if (!isSlideshowActive) c.style.display = 'none'; }, 1000);
       clearInterval(slideshowInterval);
     }
+
+    function checkOrientation(src) {
+      return new Promise(resolve => {
+        if (orientationCache[src] !== undefined) {
+          resolve(orientationCache[src]);
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          orientationCache[src] = img.naturalHeight > img.naturalWidth ? 'portrait' : 'landscape';
+          resolve(orientationCache[src]);
+        };
+        img.onerror = () => {
+          orientationCache[src] = 'landscape';
+          resolve('landscape');
+        };
+        img.src = src;
+      });
+    }
+
+    function buildPlaylist(images) {
+      return Promise.all(images.map(src => checkOrientation(src)))
+        .then(() => {
+          const portraits = images.filter(src => orientationCache[src] === 'portrait');
+          const landscapes = images.filter(src => orientationCache[src] === 'landscape');
+          const pl = [];
+
+          for (let i = 0; i < portraits.length - 1; i += 2) {
+            pl.push({ type: 'pair', src: [portraits[i], portraits[i+1]] });
+          }
+
+          if (portraits.length % 2 !== 0) {
+            const last = portraits[portraits.length - 1];
+            if (landscapes.length > 0) {
+              pl.push({ type: 'pair', src: [last, landscapes.shift()] });
+            } else {
+              pl.push({ type: 'single', src: last });
+            }
+          }
+
+          for (const src of landscapes) {
+            pl.push({ type: 'single', src });
+          }
+
+          return pl;
+        });
+    }
+
+    function showSlide(index) {
+      const slide = playlist[index];
+      const singleEl = document.getElementById('slideshow-img');
+      const pairEl = document.getElementById('slideshow-pair');
+
+      if (slide.type === 'single') {
+        singleEl.src = slide.src;
+        singleEl.style.display = 'block';
+        pairEl.style.display = 'none';
+      } else {
+        document.getElementById('slideshow-img1').src = slide.src[0];
+        document.getElementById('slideshow-img2').src = slide.src[1];
+        singleEl.style.display = 'none';
+        pairEl.style.display = 'flex';
+      }
+    }
+
     function startSlideshow() {
       fetch('/api/slideshow-images').then(res => res.json()).then(data => {
         if (data.images && data.images.length > 0) {
-          imagesList = data.images; currentImageIndex = 0;
-          document.getElementById('slideshow-img').src = imagesList[0];
-          const c = document.getElementById('slideshow-container');
-          c.style.display = 'block'; void c.offsetWidth; c.classList.add('active');
-          isSlideshowActive = true;
-          slideshowInterval = setInterval(() => {
-            const img = document.getElementById('slideshow-img');
-            img.classList.add('fade-out');
-            setTimeout(() => {
-              currentImageIndex = (currentImageIndex + 1) % imagesList.length;
-              img.src = imagesList[currentImageIndex]; img.classList.remove('fade-out');
-            }, 1500);
-          }, 60000);
+          imagesList = data.images;
+          orientationCache = {};
+          return buildPlaylist(imagesList);
         }
+      }).then(pl => {
+        if (!pl || pl.length === 0) return;
+        playlist = pl;
+        currentSlideIndex = 0;
+        showSlide(0);
+        const c = document.getElementById('slideshow-container');
+        c.style.display = 'block'; void c.offsetWidth; c.classList.add('active');
+        isSlideshowActive = true;
+        slideshowInterval = setInterval(() => {
+          const content = document.getElementById('slideshow-content');
+          content.classList.add('fade-out');
+          setTimeout(() => {
+            currentSlideIndex = (currentSlideIndex + 1) % playlist.length;
+            showSlide(currentSlideIndex);
+            content.classList.remove('fade-out');
+          }, 1500);
+        }, 60000);
       }).catch(() => {});
     }
     ['mousemove','mousedown','keypress','touchstart','scroll'].forEach(e => {
@@ -190,17 +302,13 @@ const total = tareas.length;
     .status p {
       font-size: clamp(19px, 2.2dvh, 24px) !important;
     }
-    .confetti {
-      position: fixed;
-      font-size: clamp(16px, 3dvh, 28px);
-      z-index: 100;
-      pointer-events: none;
-      filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.5));
-      will-change: transform;
-    }
     @keyframes confetti-fall {
-      0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(720deg) scale(0.3); opacity: 0; }
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes firework-burst {
+      0% { transform: translate(0,0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx),var(--dy)) scale(0); opacity: 0; }
     }
     .task-grid {
       display: grid;
@@ -232,14 +340,66 @@ const total = tareas.length;
     body.fail-mode .card::after {
       background: linear-gradient(90deg, transparent, var(--color-rose), transparent);
     }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <style is:global>
+    body.victory-mode .task-grid {
+      display: flex;
+      justify-content: center;
+      height: 100%;
+    }
     body.victory-mode .card {
       border-color: var(--color-gold);
-      box-shadow: 0 0 40px rgba(251, 191, 36, 0.3);
+      animation: victory-glow 1.5s ease-in-out infinite;
     }
     body.victory-mode .card::after {
       background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
     }
-
+    .victory-card {
+      padding: clamp(16px, 3dvh, 28px);
+      text-align: center;
+      border-radius: var(--radius);
+      background: var(--color-surface);
+      width: 100%;
+      height: auto;
+      animation: fadeIn 0.4s ease forwards;
+    }
+    .victory-card h2 {
+      color: var(--color-gold);
+      font-family: var(--font-display);
+      font-size: clamp(1.2rem, 2.5dvh, 1.6rem);
+      margin-bottom: 4px;
+    }
+    .victory-count {
+      color: var(--color-emerald);
+      font-size: clamp(1rem, 2dvh, 1.3rem);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .victory-stats {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      color: var(--color-text);
+      font-size: clamp(0.75rem, 1.4dvh, 0.95rem);
+      margin-top: 6px;
+    }
+    .victory-tasks {
+      
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px 24px;
+      margin-top: 8px;
+      font-size: clamp(1rem, 1.3dvh, 0.9rem);
+      text-align: center;
+    }
+    .victory-task-item::before {
+      content: '- ';
+    }
     .waiting-status {
       padding: 24px;
       text-align: center;
@@ -260,8 +420,9 @@ const total = tareas.length;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes victory-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(251,191,36,0.3); }
+      50% { box-shadow: 0 0 60px rgba(251,191,36,0.6), 0 0 120px rgba(251,191,36,0.2); }
     }
   </style>
 </BaseLayout>

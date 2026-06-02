@@ -29,6 +29,10 @@ const currentPath = Astro.url.pathname;
         <span class="ham-link-icon">📜</span>
         Historial
       </a>
+      <a href="/admin/slideshow" class="ham-link{currentPath === '/admin/slideshow' ? ' active' : ''}">
+        <span class="ham-link-icon">📸</span>
+        Slideshow
+      </a>
     </div>
   </nav>
 </div>

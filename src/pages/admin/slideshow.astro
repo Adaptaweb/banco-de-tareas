@@ -1,0 +1,438 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ThemeSelector from '../../components/ThemeSelector.astro';
+import { loadSlideshowImages } from '../../lib/db';
+import 'sweetalert2/dist/sweetalert2.min.css';
+
+const images = loadSlideshowImages();
+const activeCount = images.filter(i => i.active).length;
+---
+
+<BaseLayout title="Slideshow — Admin — Banco de Tareas">
+  <ThemeSelector />
+
+  <div class="container animate-fade-in">
+    <div class="card">
+      <h1 class="text-center mb-4">Gesti&oacute;n de Slideshow</h1>
+
+      <p class="text-muted text-center" style="font-size:clamp(19px,1.5dvh,17px);margin-bottom:clamp(8px,1.2dvh,18px);">
+        {activeCount} activas de {images.length} totales
+      </p>
+
+      <div class="upload-form">
+        <input type="file" id="fileInput" accept="image/*" multiple class="input-file" />
+        <button class="btn-sm btn-primary" id="btnUpload" onclick="subirImagenes()">Subir im&aacute;genes</button>
+        <button class="btn-sm btn-edit" onclick="sincronizar()" title="Escanea la carpeta y registra archivos no listados">Sincronizar</button>
+      </div>
+
+      <div id="uploadStatus" class="upload-status"></div>
+
+      <div class="divider"></div>
+
+      {images.length > 0 ? (
+        <div class="image-grid">
+          {images.map(img => (
+            <div class="image-card" data-id={img.id}>
+              <img src={`/slideshow/${img.filename}`} alt={img.filename} class="image-thumb" loading="lazy" />
+              <div class="image-info">
+                <span class="image-filename" title={img.filename}>{img.filename}</span>
+              </div>
+              <label class="toggle-switch" title={img.active ? 'Activa' : 'Inactiva'}>
+                <input type="checkbox" checked={img.active ? true : undefined} onchange={`toggleImagen(${img.id})`} />
+                <span class="toggle-slider"></span>
+              </label>
+              <button class="btn-sm btn-danger" onclick={`eliminarImagen(${img.id}, '${img.filename}')`}>Eliminar</button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="empty-state">
+          <p class="text-muted">No hay im&aacute;genes en el slideshow</p>
+          <p class="text-muted" style="font-size:clamp(11px,1.2dvh,14px);margin-top:4px;">
+            Sube im&aacute;genes usando el formulario de arriba o coloca archivos en <code>public/slideshow/</code> y presiona Sincronizar.
+          </p>
+        </div>
+      )}
+
+      <div class="nav-links">
+        <a href="/admin">Volver al Panel de Control</a>
+        <a href="/">Volver a la vista de Mat&iacute;as</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import Swal from 'sweetalert2';
+
+    function swalTheme() {
+      return document.body.classList.contains('theme-mario') ? 'swal-mario' : 'swal-minecraft';
+    }
+
+    function mostrarStatus(msg, tipo) {
+      const el = document.getElementById('uploadStatus');
+      if (el) {
+        el.textContent = msg;
+        el.className = 'upload-status ' + (tipo === 'error' ? 'status-error' : 'status-ok');
+        el.style.display = 'block';
+        setTimeout(() => { el.style.display = 'none'; }, 4000);
+      }
+    }
+
+    window.subirImagenes = function() {
+      const input = document.getElementById('fileInput');
+      if (!input.files || input.files.length === 0) {
+        mostrarStatus('Selecciona al menos una imagen', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnUpload');
+      btn.disabled = true;
+      btn.textContent = 'Subiendo...';
+
+      const files = Array.from(input.files);
+      const filePromises = files.map(f => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve({ filename: f.name, data: base64 });
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(f);
+        });
+      });
+
+      Promise.all(filePromises).then(fileData => {
+        return fetch('/api/slideshow-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accion: 'upload', files: fileData }),
+        });
+      }).then(r => r.json()).then(data => {
+        if (data.ok) {
+          mostrarStatus(`${data.uploaded.length} imagen(es) subida(s) correctamente`, 'ok');
+          setTimeout(() => location.reload(), 800);
+        } else {
+          mostrarStatus('Error al subir: ' + (data.error || 'desconocido'), 'error');
+          btn.disabled = false;
+          btn.textContent = 'Subir im\u00e1genes';
+        }
+      }).catch(err => {
+        mostrarStatus('Error de red: ' + err.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Subir im\u00e1genes';
+      });
+    };
+
+    window.toggleImagen = function(id) {
+      fetch('/api/slideshow-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'toggle', id }),
+      }).then(r => r.json()).then(data => {
+        if (data.ok) location.reload();
+      });
+    };
+
+    window.eliminarImagen = function(id, filename) {
+      Swal.fire({
+        title: 'Eliminar imagen',
+        text: `\u00bfEst\u00e1s seguro de eliminar "${filename}" del slideshow?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+          popup: swalTheme(),
+          confirmButton: 'swal-btn-confirm',
+          cancelButton: 'swal-btn-cancel',
+        },
+      }).then(r => {
+        if (r.isConfirmed) {
+          fetch('/api/slideshow-images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'delete', id }),
+          }).then(r => r.json()).then(data => {
+            if (data.ok) location.reload();
+          });
+        }
+      });
+    };
+
+    window.sincronizar = function() {
+      fetch('/api/slideshow-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'sync' }),
+      }).then(r => r.json()).then(data => {
+        if (data.ok) {
+          mostrarStatus('Sincronizaci\u00f3n completada', 'ok');
+          setTimeout(() => location.reload(), 800);
+        }
+      });
+    };
+  </script>
+
+  <style>
+    .upload-form {
+      display: flex;
+      gap: clamp(3px, 0.5dvh, 8px);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .input-file {
+      flex: 1;
+      min-width: min(180px, 50dvw);
+      font-family: var(--font-body);
+      font-size: clamp(11px, 1.3dvh, 15px);
+      padding: clamp(6px, 0.8dvh, 12px);
+      border: 2px solid var(--color-border);
+      background: #0a0a0a;
+      color: var(--color-text);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .input-file::file-selector-button {
+      font-family: var(--font-body);
+      font-size: clamp(11px, 1.3dvh, 15px);
+      padding: 4px 12px;
+      margin-right: 12px;
+      border: 2px solid var(--color-border);
+      background: var(--color-surface);
+      color: var(--color-text);
+      cursor: pointer;
+    }
+
+    .upload-status {
+      display: none;
+      text-align: center;
+      margin-top: clamp(6px, 1dvh, 12px);
+      font-size: clamp(12px, 1.4dvh, 16px);
+      font-weight: 600;
+      padding: clamp(4px, 0.6dvh, 8px);
+    }
+
+    .status-ok { color: var(--color-emerald); }
+    .status-error { color: var(--color-rose); }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+      gap: clamp(6px, 0.8dvh, 12px);
+      margin-top: clamp(4px, 0.6dvh, 8px);
+    }
+
+    .image-card {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(4px, 0.5dvh, 8px);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: clamp(6px, 0.8dvh, 12px);
+      align-items: center;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+
+    .image-card:hover {
+      border-color: var(--color-gold-dim);
+    }
+
+    .image-thumb {
+      width: 100%;
+      height: clamp(100px, 14dvh, 160px);
+      object-fit: cover;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: #0a0a0a;
+    }
+
+    .image-info {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .image-filename {
+      display: block;
+      font-size: clamp(10px, 1.2dvh, 13px);
+      font-family: var(--font-body);
+      color: var(--color-text-dim);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+    }
+
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: clamp(40px, 5dvh, 50px);
+      height: clamp(22px, 2.8dvh, 28px);
+      cursor: pointer;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #555;
+      border: 2px solid var(--color-border);
+      transition: all 0.3s ease;
+      border-radius: var(--radius-sm);
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      height: calc(100% - 6px);
+      aspect-ratio: 1;
+      left: 3px;
+      bottom: 3px;
+      background: #aaa;
+      transition: all 0.3s ease;
+      border-radius: var(--radius-sm);
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--color-emerald-dim);
+      border-color: var(--color-emerald);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(calc(clamp(40px, 5dvh, 50px) - 22px));
+      background: var(--color-emerald);
+    }
+
+    .toggle-switch input:focus-visible + .toggle-slider {
+      box-shadow: 0 0 0 2px rgba(85, 255, 85, 0.15);
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--color-border);
+      margin: clamp(8px, 1.2dvh, 20px) 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: clamp(16px, 3dvh, 40px) clamp(12px, 2dvw, 16px);
+      font-family: var(--font-body);
+    }
+
+    .empty-state code {
+      font-family: 'Minecraftia', monospace;
+      font-size: clamp(10px, 1.1dvh, 13px);
+      background: var(--color-surface);
+      padding: 2px 6px;
+      border: 1px solid var(--color-border);
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: clamp(8px, 1.5dvh, 20px);
+      margin-top: clamp(8px, 1.5dvh, 24px);
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      font-size: clamp(11px, 1.2dvh, 14px);
+      font-family: var(--font-body);
+      font-weight: 600;
+    }
+
+    .btn-sm {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: clamp(13px, 1.5dvh, 17px);
+      padding: clamp(8px, 1dvh, 14px) clamp(14px, 1.8dvh, 22px);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--color-emerald);
+      color: var(--color-bg);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-emerald-dim);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-danger {
+      background: var(--color-rose);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--color-rose-dim);
+      transform: translateY(-1px);
+    }
+
+    .btn-edit {
+      background: var(--color-gold-dim);
+      color: #000;
+    }
+
+    .btn-edit:hover {
+      background: var(--color-gold);
+      transform: translateY(-1px);
+    }
+
+    /* Mario theme overrides */
+    :global(body.theme-mario) .toggle-slider {
+      border-radius: 6px;
+    }
+
+    :global(body.theme-mario) .toggle-slider::before {
+      border-radius: 4px;
+    }
+
+    :global(body.theme-mario) .toggle-switch input:checked + .toggle-slider {
+      background: #e52521;
+      border-color: #fbd000;
+    }
+
+    :global(body.theme-mario) .toggle-switch input:checked + .toggle-slider::before {
+      background: #fbd000;
+    }
+
+    :global(body.theme-mario) .image-card {
+      border-radius: 6px;
+    }
+
+    :global(body.theme-mario) .image-thumb {
+      border-radius: 4px;
+    }
+
+    :global(body.theme-mario) .input-file {
+      border-radius: 6px;
+    }
+
+    :global(body.theme-mario) .input-file::file-selector-button {
+      border-radius: 4px;
+    }
+  </style>
+</BaseLayout>

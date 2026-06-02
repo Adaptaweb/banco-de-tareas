@@ -1,6 +1,12 @@
 <div id="slideshow-container">
   <div class="slideshow-overlay"></div>
-  <img id="slideshow-img" src="" alt="Slideshow" />
+  <div id="slideshow-content">
+    <img id="slideshow-img" src="" alt="Slideshow" />
+    <div id="slideshow-pair">
+      <img id="slideshow-img1" src="" alt="Slideshow" />
+      <img id="slideshow-img2" src="" alt="Slideshow" />
+    </div>
+  </div>
   <div class="slideshow-clock">
     <div id="slideshow-time"></div>
     <div id="slideshow-date"></div>
@@ -36,16 +42,40 @@
     pointer-events: none;
   }
 
+  #slideshow-content {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transition: opacity 1.5s ease-in-out;
+  }
+
+  #slideshow-content.fade-out {
+    opacity: 0;
+  }
+
   #slideshow-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 1.5s ease-in-out;
     animation: ken-burns 30s ease-in-out infinite alternate;
   }
 
-  #slideshow-img.fade-out {
-    opacity: 0;
+  #slideshow-pair {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-direction: row;
+  }
+
+  #slideshow-pair img {
+    width: 50%;
+    height: 100%;
+    object-fit: cover;
+    animation: ken-burns 30s ease-in-out infinite alternate;
+  }
+
+  #slideshow-pair img:last-child {
+    animation-delay: -15s;
   }
 
   @keyframes ken-burns {

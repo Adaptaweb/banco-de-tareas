@@ -5,6 +5,7 @@ import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.resolve(__dirname, '../../datos_cajero.db');
+const SLIDESHOW_DIR = path.resolve(__dirname, '../../public/slideshow');
 
 let db: Database.Database;
 
@@ -39,6 +40,7 @@ function initTables() {
     );
   `);
   migrateTiempoColumn();
+  initSlideshowTable();
 }
 
 function migrateTiempoColumn() {
@@ -163,4 +165,64 @@ export function getHistory() {
     tiempo_ganado: r.tiempo_ganado,
     tareas_completadas: JSON.parse(r.tareas_completadas) as string[],
   }));
+}
+
+/* ===== Slideshow image management ===== */
+
+export interface SlideshowImage {
+  id: number;
+  filename: string;
+  active: number;
+  sort_order: number;
+  created_at: string;
+}
+
+function initSlideshowTable() {
+  const d = getDb();
+  d.exec(`
+    CREATE TABLE IF NOT EXISTS slideshow_images (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename   TEXT NOT NULL UNIQUE,
+      active     INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  syncSlideshowFromFilesystem();
+}
+
+export function syncSlideshowFromFilesystem() {
+  const d = getDb();
+  if (!fs.existsSync(SLIDESHOW_DIR)) {
+    fs.mkdirSync(SLIDESHOW_DIR, { recursive: true });
+    return;
+  }
+  const validExts = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
+  const existing = fs.readdirSync(SLIDESHOW_DIR).filter(f =>
+    validExts.some(ext => f.toLowerCase().endsWith(ext))
+  );
+  const insert = d.prepare('INSERT OR IGNORE INTO slideshow_images (filename) VALUES (?)');
+  for (const f of existing) {
+    insert.run(f);
+  }
+}
+
+export function loadSlideshowImages(activeOnly = false): SlideshowImage[] {
+  const d = getDb();
+  const sql = activeOnly
+    ? 'SELECT * FROM slideshow_images WHERE active = 1 ORDER BY sort_order, created_at'
+    : 'SELECT * FROM slideshow_images ORDER BY sort_order, created_at';
+  return d.prepare(sql).all() as SlideshowImage[];
+}
+
+export function addSlideshowImage(filename: string) {
+  getDb().prepare('INSERT OR IGNORE INTO slideshow_images (filename) VALUES (?)').run(filename);
+}
+
+export function removeSlideshowImage(id: number) {
+  getDb().prepare('DELETE FROM slideshow_images WHERE id = ?').run(id);
+}
+
+export function toggleSlideshowImage(id: number) {
+  getDb().prepare('UPDATE slideshow_images SET active = CASE WHEN active THEN 0 ELSE 1 END WHERE id = ?').run(id);
 }
