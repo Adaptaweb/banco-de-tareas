@@ -126,13 +126,16 @@ export function startBot() {
 
       state.estado_mision = 'aprobada';
       await ctx.editMessageText(`✅ APROBADA: ${tareaNombre}`);
+
+      const dbOk = loadState();
+      saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbOk.tareas_activas, 'aprobada');
     } else if (data === 'no') {
       state.estado_mision = 'rechazada';
       await ctx.editMessageText('❌ RECHAZADA');
-    }
 
-    const dbSt = loadState();
-    saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbSt.tareas_activas, state.estado_mision);
+      const dbNo = loadState();
+      saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbNo.tareas_activas, 'rechazada');
+    }
 
     await ctx.answerCbQuery();
   });
