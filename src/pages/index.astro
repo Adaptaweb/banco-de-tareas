@@ -110,31 +110,70 @@ const total = tareas.length;
       if (ssTime && ssDate) { ssTime.innerText = horaStr; ssDate.innerText = fechaStr.toUpperCase(); }
     }
     setInterval(actualizarReloj, 1000);
+    let pollTimer = null;
+    function actualizarUI(data) {
+      let porcentaje = data.total_tareas > 0 ? Math.round((data.aprobadas.length / data.total_tareas) * 100) : 0;
+      document.getElementById('xpFill').style.width = Math.min(porcentaje, 100) + '%';
+      document.getElementById('porcentajeTxt').innerText = porcentaje + '%';
+      document.getElementById('faltaPorcentajeTxt').innerText = 'Faltan ' + (100 - porcentaje > 0 ? 100 - porcentaje : 0) + '%';
+      document.getElementById('tiempoTxt').innerText = data.tiempo_formato;
+      document.getElementById('tareasTxt').innerText = 'MISIONES: ' + data.aprobadas.length + ' / ' + data.total_tareas;
+    }
+    function cargarEstadoInicial() {
+      fetch('/api/estado').then(res => res.json()).then(data => {
+        actualizarUI(data);
+        if (data.total_tareas > 0 && data.aprobadas.length === data.total_tareas) {
+          finalActivo = true;
+          document.body.classList.add('victory-mode');
+          const horaFin = new Date().toLocaleTimeString('es-CL');
+          const listaTareas = data.aprobadas.map(t => '<span class="victory-task-item">' + t + '</span>').join('');
+          document.getElementById('contenido').innerHTML = "<div class='status victory-card' style='width:100%;'>"
+            + "<h2>🏆 META FINAL!</h2>"
+            + "<p class='victory-count'>" + data.total_tareas + "/" + data.total_tareas + " MISIONES LOGRADAS</p>"
+            + "<div class='victory-stats'>"
+            + "<span>⏱ " + data.tiempo_formato + "</span>"
+            + "<span>🕐 " + horaFin + "</span>"
+            + "</div>"
+            + "<div class='victory-tasks'>" + listaTareas + "</div>"
+            + "</div>";
+          setInterval(spawnConfetti, 300);
+          setInterval(spawnFirework, 1500);
+          return;
+        }
+        data.aprobadas.forEach(tarea => {
+          const btn = document.querySelector('[data-nombre="' + tarea + '"]');
+          if (btn && !btn.disabled) btn.disabled = true;
+        });
+      }).catch(() => {});
+    }
     window.enviarMision = function(tarea) {
       aClic.currentTime = 0; aClic.play().catch(() => {});
       document.body.classList.remove('fail-mode');
       document.getElementById('contenido').innerHTML = "<div class='status waiting-status'><div class='spinner'></div><p>Solicitando Aprobación</p></div>";
       ultimoEstadoProcesado = 'enviada';
       fetch('/api/mandar?tarea=' + encodeURIComponent(tarea));
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = setInterval(pollEstadoEsperando, 2000);
     }
-    window.volverAlMenu = function() { fetch('/api/estado-reset').then(() => { location.reload(); }); }
-    function pollEstado() {
+    window.volverAlMenu = function() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
+      fetch('/api/estado-reset').then(() => { location.reload(); });
+    }
+    function detenerPoll() {
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    }
+    function pollEstadoEsperando() {
       fetch('/api/estado').then(res => res.json()).then(data => {
-        let porcentaje = data.total_tareas > 0 ? Math.round((data.aprobadas.length / data.total_tareas) * 100) : 0;
-        document.getElementById('xpFill').style.width = Math.min(porcentaje, 100) + '%';
-        document.getElementById('porcentajeTxt').innerText = porcentaje + '%';
-        document.getElementById('faltaPorcentajeTxt').innerText = 'Faltan ' + (100 - porcentaje > 0 ? 100 - porcentaje : 0) + '%';
-        document.getElementById('tiempoTxt').innerText = data.tiempo_formato;
-        document.getElementById('tareasTxt').innerText = 'MISIONES: ' + data.aprobadas.length + ' / ' + data.total_tareas;
-        const contenido = document.getElementById('contenido');
-        if (!contenido) return;
-        if (data.total_tareas > 0 && data.aprobadas.length === data.total_tareas && data.valor !== 'esperando') {
+        actualizarUI(data);
+        if (data.total_tareas > 0 && data.aprobadas.length === data.total_tareas) {
+          detenerPoll();
           if (!finalActivo) {
             finalActivo = true; aVictory.play();
             document.body.classList.add('victory-mode');
             const horaFin = new Date().toLocaleTimeString('es-CL');
             const listaTareas = data.aprobadas.map(t => '<span class="victory-task-item">' + t + '</span>').join('');
-            contenido.innerHTML = "<div class='status victory-card' style='width:100%;'>"
+            document.getElementById('contenido').innerHTML = "<div class='status victory-card' style='width:100%;'>"
               + "<h2>🏆 META FINAL!</h2>"
               + "<p class='victory-count'>" + data.total_tareas + "/" + data.total_tareas + " MISIONES LOGRADAS</p>"
               + "<div class='victory-stats'>"
@@ -146,26 +185,27 @@ const total = tareas.length;
             setInterval(spawnConfetti, 300);
             setInterval(spawnFirework, 1500);
           }
-        } else {
-          data.aprobadas.forEach(tarea => {
-            const btn = document.querySelector('[data-nombre="' + tarea + '"]');
-            if (btn && !btn.disabled) btn.disabled = true;
-          });
-          if (data.valor === 'aprobada' && ultimoEstadoProcesado !== 'aprobada') {
-            ultimoEstadoProcesado = 'aprobada'; aMoneda.play();
-            document.body.classList.remove('fail-mode');
-            contenido.innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-emerald);border-radius:var(--radius);background:var(--color-surface);width:100%;'><p style='color:var(--color-emerald);font-size:1.3rem;font-weight:700;font-family:var(--font-display);'>LEVEL UP!</p><p style='color:var(--color-text);margin-top:8px;'>Misión cumplida</p></div><button onclick='volverAlMenu()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🔄</span> VOLVER</button></div>";
-          } else if (data.valor === 'rechazada' && ultimoEstadoProcesado !== 'rechazada') {
-            ultimoEstadoProcesado = 'rechazada'; aError.play();
-            document.body.classList.add('fail-mode');
-            contenido.innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-rose);border-radius:var(--radius);background:rgba(244,63,94,0.1);width:100%;'><p style='color:var(--color-rose);font-size:1.1rem;font-family:var(--font-display);'>RECHAZADO</p></div><button onclick='volverAlMenu()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🏹</span> REINTENTAR</button></div>";
-          }
+          return;
         }
-        setTimeout(pollEstado, 1500);
-      }).catch(() => { setTimeout(pollEstado, 3000); });
+        data.aprobadas.forEach(tarea => {
+          const btn = document.querySelector('[data-nombre="' + tarea + '"]');
+          if (btn && !btn.disabled) btn.disabled = true;
+        });
+        if (data.valor === 'aprobada' && ultimoEstadoProcesado !== 'aprobada') {
+          detenerPoll();
+          ultimoEstadoProcesado = 'aprobada'; aMoneda.play();
+          document.body.classList.remove('fail-mode');
+          document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-emerald);border-radius:var(--radius);background:var(--color-surface);width:100%;'><p style='color:var(--color-emerald);font-size:1.3rem;font-weight:700;font-family:var(--font-display);'>LEVEL UP!</p><p style='color:var(--color-text);margin-top:8px;'>Misión cumplida</p></div><button onclick='volverAlMenu()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🔄</span> VOLVER</button></div>";
+        } else if (data.valor === 'rechazada' && ultimoEstadoProcesado !== 'rechazada') {
+          detenerPoll();
+          ultimoEstadoProcesado = 'rechazada'; aError.play();
+          document.body.classList.add('fail-mode');
+          document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-rose);border-radius:var(--radius);background:rgba(244,63,94,0.1);width:100%;'><p style='color:var(--color-rose);font-size:1.1rem;font-family:var(--font-display);'>RECHAZADO</p></div><button onclick='volverAlMenu()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🏹</span> REINTENTAR</button></div>";
+        }
+      }).catch(() => {});
     }
     (function esperarTema() {
-      if (window.themeListo) pollEstado();
+      if (window.themeListo) cargarEstadoInicial();
       else setTimeout(esperarTema, 30);
     })();
     let timeoutInactivity, slideshowInterval;
