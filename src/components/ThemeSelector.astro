@@ -1,0 +1,44 @@
+<div class="theme-selector">
+  <select id="themeSelect" onchange="cambiarTema(this.value)">
+    <option value="minecraft">Minecraft</option>
+    <option value="mario">Mario</option>
+  </select>
+</div>
+
+<style>
+  .theme-selector {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 100;
+  }
+
+  .theme-selector select {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    padding: 8px 32px 8px 12px;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-gold);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23fbbf24' d='M5 6L0 0h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px 6px;
+    letter-spacing: 0.5px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .theme-selector select:hover {
+    border-color: var(--color-gold-dim);
+  }
+
+  .theme-selector select:focus {
+    border-color: var(--color-gold);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
+  }
+</style>

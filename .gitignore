@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+datos_cajero.db
+datos_cajero.db-shm
+datos_cajero.db-wal
+public/datos_cajero.db
+.astro/
+.opencode/
+__pycache__/
+*.py
+append_script.py

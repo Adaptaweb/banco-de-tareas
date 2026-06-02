@@ -1,0 +1,51 @@
+---
+export interface Props {
+  nombre: string;
+  icono: string;
+  tiempo: number;
+  disabled: boolean;
+  index: number;
+}
+
+const { nombre, icono, tiempo, disabled, index } = Astro.props;
+const animDelay = (index * 0.08).toFixed(2);
+---
+
+<button
+  id={`btn-${index}`}
+  class:list={['btn', 'task-btn', 'animate-fade-in']}
+  style={`animation-delay: ${animDelay}s`}
+  disabled={disabled}
+  data-nombre={nombre}
+  onclick={`enviarMision('${nombre}')`}
+  onmouseenter="sonarHover()"
+>
+  <span class="btn-icon">{icono}</span>
+  <span class="task-name">{nombre}</span>
+  <span class="task-time">+{tiempo} min</span>
+</button>
+
+<style>
+  .task-btn {
+    position: relative;
+    height: clamp(84px, 6dvh, 64px);
+  }
+
+  .task-name {
+    font-size: clamp(19px, 1.6dvh, 17px);
+    letter-spacing: 1px;
+  }
+
+  .task-time {
+    font-size: clamp(19px, 1.6dvh, 12px);
+    color: var(--color-gold);
+    font-family: var(--font-display);
+    margin-left: auto;
+    padding-left: clamp(4px, 0.6dvh, 10px);
+    white-space: nowrap;
+  }
+  .btn-icon {
+      font-size: clamp(2rem, 1.3dvh, 1.2rem);
+    }
+
+</style>

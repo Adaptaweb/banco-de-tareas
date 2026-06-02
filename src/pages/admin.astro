@@ -1,0 +1,503 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ThemeSelector from '../components/ThemeSelector.astro';
+import { loadState } from '../lib/db';
+import 'sweetalert2/dist/sweetalert2.min.css';
+
+const db = loadState();
+---
+
+<BaseLayout title="Admin — Banco de Tareas">
+  <ThemeSelector />
+
+  <div class="container animate-fade-in">
+    <div class="card">
+      <h1 class="text-center mb-4">Panel de Control</h1>
+
+      <p class="text-muted text-center" style="font-size:clamp(19px,1.5dvh,17px);margin-bottom:clamp(8px,1.2dvh,18px);">
+        {db.tareas_activas.length} misiones activas
+      </p>
+
+      {db.tareas_activas.length > 0 ? (
+        <ul class="task-list">
+          {db.tareas_activas.map(t => (
+            <li class="task-item">
+              <span class="task-item-name"><span class="task-item-icon">{t.icono}</span> {t.nombre}</span>
+              <span class="task-item-time">⏱ {t.tiempo} min</span>
+              <div class="task-item-actions">
+                <button class="btn-sm btn-edit" onclick={`editarTarea('${t.nombre}', '${t.icono}', ${t.tiempo})`}>Editar</button>
+                <button class="btn-sm btn-danger" onclick={`quitarTarea('${t.nombre}')`}>Eliminar</button>
+
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="empty-state">
+          <p class="text-muted">No hay misiones configuradas</p>
+        </div>
+      )}
+
+      <div class="divider"></div>
+
+      <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">Agregar Misión</h2>
+
+      <div class="form-group">
+        <input type="text" id="icono_nuevo" placeholder="Icono" maxlength="2" class="input-icono" />
+        <input type="text" id="nombre_nuevo" placeholder="Nombre de la Misión" class="input-nombre" />
+        <input type="number" id="tiempo_nuevo" placeholder="Minutos" value="15" min="1" class="input-tiempo" />
+        <button class="btn-sm btn-primary" onclick="agregarTarea()">Agregar</button>
+      </div>
+
+      <div class="nav-links">
+        <a href="/historial">Ver Historial Diario</a>
+        <a href="/">Volver a la vista de Matías</a>
+      </div>
+
+      <div class="test-only">
+        <div class="divider"></div>
+        <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">Testing</h2>
+        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn-sm btn-danger" onclick="limpiarHoy()">Limpiar datos de hoy</button>
+          <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import Swal from 'sweetalert2';
+
+    function swalTheme() {
+      return document.body.classList.contains('theme-mario') ? 'swal-mario' : 'swal-minecraft';
+    }
+
+    window.quitarTarea = function(nombre) {
+      Swal.fire({
+        title: 'Eliminar misión',
+        text: `\u00bfEst\u00e1s seguro de eliminar "${nombre}"?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+          popup: swalTheme(),
+          confirmButton: 'swal-btn-confirm',
+          cancelButton: 'swal-btn-cancel',
+        },
+      }).then(r => {
+        if (r.isConfirmed) {
+          fetch('/api/modificar-tareas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'quitar', nombre })
+          }).then(() => location.reload());
+        }
+      });
+    }
+
+    window.editarTarea = function(nombre, iconoActual, tiempoActual) {
+      const escapeStr = s => s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      Swal.fire({
+        title: 'Editar misi\u00f3n',
+        html: `
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            <input id="swal-icono" type="text" maxlength="2" value="${escapeStr(iconoActual)}" placeholder="Icono" style="text-align:center;padding:6px;font-size:14px;width:60px;margin:0 auto;" />
+            <input id="swal-nombre" type="text" value="${escapeStr(nombre)}" placeholder="Nombre" style="padding:6px;font-size:14px;width:100%;box-sizing:border-box;" />
+            <input id="swal-tiempo" type="number" value="${tiempoActual}" min="1" placeholder="Minutos" style="padding:6px;font-size:14px;width:100%;box-sizing:border-box;" />
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Guardar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+          popup: swalTheme(),
+          confirmButton: 'swal-btn-confirm',
+          cancelButton: 'swal-btn-cancel',
+        },
+        preConfirm: () => {
+          const icono = document.getElementById('swal-icono').value.trim() || '📌';
+          const nuevoNombre = document.getElementById('swal-nombre').value.trim();
+          const tiempo = parseInt(document.getElementById('swal-tiempo').value, 10);
+          if (!nuevoNombre) {
+            Swal.showValidationMessage('El nombre no puede estar vac\u00edo');
+            return false;
+          }
+          if (!tiempo || tiempo < 1) {
+            Swal.showValidationMessage('Debe ser un n\u00famero v\u00e1lido mayor a 0');
+            return false;
+          }
+          return { icono, nuevoNombre, tiempo };
+        },
+      }).then(r => {
+        if (r.isConfirmed && r.value) {
+          fetch('/api/modificar-tareas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'editar_tarea', nombre, nuevo_nombre: r.value.nuevoNombre, icono: r.value.icono, tiempo: r.value.tiempo })
+          }).then(() => location.reload());
+        }
+      });
+    }
+
+    window.agregarTarea = function() {
+      const nombre = document.getElementById('nombre_nuevo').value.trim();
+      const icono = document.getElementById('icono_nuevo').value.trim() || '📌';
+      const tiempo = parseInt(document.getElementById('tiempo_nuevo').value, 10) || 15;
+      if (!nombre) return;
+      fetch('/api/modificar-tareas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'agregar', nombre, icono, tiempo })
+      }).then(() => location.reload());
+    }
+
+    window.limpiarHoy = function() {
+      Swal.fire({
+        title: 'Limpiar datos de hoy',
+        text: 'Esto eliminar\u00e1 el historial y reiniciar\u00e1 las tareas de hoy. \u00bfContinuar?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Limpiar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+          popup: swalTheme(),
+          confirmButton: 'swal-btn-confirm',
+          cancelButton: 'swal-btn-cancel',
+        },
+      }).then(r => {
+        if (r.isConfirmed) {
+          fetch('/api/limpiar-hoy')
+            .then(() => location.reload());
+        }
+      });
+    }
+
+    window.testHa = function() {
+      Swal.fire({
+        title: 'Probando Webhook HA',
+        html: 'Enviando solicitud...',
+        icon: 'info',
+        timer: undefined,
+        showConfirmButton: false,
+        buttonsStyling: false,
+        customClass: { popup: swalTheme() },
+        didOpen: () => Swal.showLoading(),
+      });
+      fetch('/api/test-ha')
+        .then(r => r.json())
+        .then(data => {
+          const lines = Object.entries(data.results).map(([k, v]) => `${k}: ${v}`).join('<br>');
+          Swal.fire({
+            title: data.ok ? '✅ HA Webhook OK' : '❌ HA Webhook Error',
+            html: lines,
+            icon: data.ok ? 'success' : 'error',
+            timer: 5000,
+            showConfirmButton: true,
+            buttonsStyling: false,
+            customClass: { popup: swalTheme(), confirmButton: 'swal-btn-confirm' },
+          });
+        });
+    }
+
+  </script>
+
+  <style>
+    .task-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(4px, 0.5dvh, 8px);
+      align-content: start;
+    }
+
+    .task-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: clamp(6px, 1dvh, 12px) clamp(8px, 1.5dvh, 16px);
+      margin-bottom: 0;
+      height: clamp(130px, 5.5dvh, 56px);
+      font-family: var(--font-body);
+      font-size: clamp(13px, 1.5dvh, 17px);
+      animation: fadeIn 0.3s ease forwards;
+      transition: border-color 0.2s, transform 0.2s;
+      flex-wrap: wrap;
+    }
+
+    .task-item:hover {
+      border-color: var(--color-green);
+      transform: translateX(2px);
+    }
+
+    .task-item-name {
+      display: flex;
+      align-items: center;
+      gap: clamp(19px, 0.6dvh, 10px);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .task-item-icon {
+      font-size: clamp(2rem, 1.3dvh, 1.2rem);
+    }
+
+    .task-item-time {
+      font-family: var(--font-display);
+      color: var(--color-gold);
+      font-size: clamp(19px, 1.2dvh, 13px);
+      white-space: nowrap;
+    }
+
+    .task-item-actions {
+      display: flex;
+      gap: clamp(3px, 0.4dvh, 6px);
+      flex-shrink: 0;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--color-border);
+      margin: clamp(8px, 1.2dvh, 20px) 0;
+    }
+
+    .form-group {
+      display: flex;
+      gap: clamp(3px, 0.5dvh, 8px);
+    }
+
+    .input-icono {
+      width: clamp(40px, 8dvw, 64px);
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .input-nombre {
+      flex: 1;
+      min-width: min(140px, 40dvw);
+    }
+
+    .input-tiempo {
+      width: clamp(50px, 10dvw, 80px);
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .input-nombre {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .btn-sm {
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: clamp(13px, 1.5dvh, 17px);
+      padding: clamp(8px, 1dvh, 14px) clamp(14px, 1.8dvh, 22px);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-danger {
+      background: var(--color-rose);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--color-rose-dim);
+      transform: translateY(-1px);
+    }
+
+    .btn-edit {
+      background: var(--color-gold-dim);
+      color: #000;
+    }
+
+    .btn-edit:hover {
+      background: var(--color-gold);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: var(--color-emerald);
+      color: var(--color-bg);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-emerald-dim);
+      transform: translateY(-1px);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: clamp(12px, 2dvh, 32px) clamp(12px, 2dvw, 16px);
+      font-family: var(--font-body);
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: clamp(8px, 1.5dvh, 20px);
+      margin-top: clamp(8px, 1.5dvh, 24px);
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      font-size: clamp(11px, 1.2dvh, 14px);
+      font-family: var(--font-body);
+      font-weight: 600;
+    }
+  </style>
+
+  <style is:global>
+    /* ===== SweetAlert2 Minecraft Theme ===== */
+    .swal-minecraft {
+      background: #2d2d2d !important;
+      border: 2px solid #1e1e1f !important;
+      box-shadow:
+        inset 2px 2px 0 rgba(255, 255, 255, 0.08),
+        inset -2px -2px 0 rgba(0, 0, 0, 0.3),
+        0 4px 24px rgba(0, 0, 0, 0.6) !important;
+      border-radius: 0 !important;
+      padding: 24px !important;
+    }
+    .swal-minecraft .swal2-title {
+      font-family: 'Minecraftia', monospace !important;
+      font-size: 0.8rem !important;
+      color: #ffff00 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 2px !important;
+      text-shadow: 2px 2px 0 #3f3f3f !important;
+      padding: 0 !important;
+      margin-bottom: 12px !important;
+    }
+    .swal-minecraft .swal2-html-container {
+      font-family: 'Minecraftia', monospace !important;
+      font-size: 0.65rem !important;
+      color: #ffffff !important;
+      letter-spacing: 1px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .swal-minecraft .swal2-icon.swal2-warning {
+      border-color: #ffff00 !important;
+      color: #ffff00 !important;
+      font-size: 24px !important;
+      margin-bottom: 12px !important;
+    }
+    .swal-minecraft .swal2-actions {
+      gap: 8px !important;
+      margin-top: 16px !important;
+    }
+    .swal-minecraft .swal2-icon-content {
+      font-size: 32px !important;
+    }
+
+    /* ===== SweetAlert2 Mario Theme ===== */
+    .swal-mario {
+      background: linear-gradient(135deg, #1a1a2e, #16213e) !important;
+      border: 1px solid #fbd000 !important;
+      border-radius: 12px !important;
+      box-shadow: 0 8px 32px rgba(251, 208, 0, 0.12) !important;
+      padding: 24px !important;
+    }
+    .swal-mario .swal2-title {
+      font-family: 'Press Start 2P', monospace !important;
+      font-size: 0.65rem !important;
+      color: #fbd000 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      padding: 0 !important;
+      margin-bottom: 12px !important;
+    }
+    .swal-mario .swal2-html-container {
+      font-family: 'Exo 2', system-ui, sans-serif !important;
+      font-size: 0.85rem !important;
+      color: #ffffff !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .swal-mario .swal2-icon.swal2-warning {
+      border-color: #fbd000 !important;
+      color: #fbd000 !important;
+      margin-bottom: 12px !important;
+    }
+
+    /* ===== Shared Button Styles ===== */
+    .swal-btn-confirm,
+    .swal-btn-cancel {
+      font-family: var(--font-body) !important;
+      font-weight: 600 !important;
+      font-size: 0.75rem !important;
+      padding: 10px 20px !important;
+      border: 2px solid #1e1e1f !important;
+      cursor: pointer !important;
+      transition: all 0.2s !important;
+      min-width: 100px !important;
+    }
+
+    .swal-btn-confirm {
+      background: #00aa00 !important;
+      color: #ffffff !important;
+      text-shadow: 1px 1px 0 #003f00 !important;
+      box-shadow:
+        inset 2px 2px 0 rgba(255, 255, 255, 0.5),
+        inset -2px -2px 0 #005500 !important;
+    }
+    .swal-btn-confirm:hover {
+      background: #55ff55 !important;
+      color: #1a1a1a !important;
+    }
+
+    .swal-btn-cancel {
+      background: #555555 !important;
+      color: #ffffff !important;
+      text-shadow: 1px 1px 0 #1a1a1a !important;
+      box-shadow:
+        inset 2px 2px 0 rgba(255, 255, 255, 0.3),
+        inset -2px -2px 0 #2a2a2a !important;
+    }
+    .swal-btn-cancel:hover {
+      background: #888888 !important;
+    }
+
+    body.theme-mario .swal-btn-confirm {
+      background: #e52521 !important;
+      border: 1px solid #fbd000 !important;
+      border-radius: 6px !important;
+      color: #ffffff !important;
+      box-shadow: 0 2px 8px rgba(229, 37, 33, 0.3) !important;
+    }
+    body.theme-mario .swal-btn-confirm:hover {
+      background: #c41e1a !important;
+      transform: translateY(-1px) !important;
+    }
+    body.theme-mario .swal-btn-cancel {
+      background: #333 !important;
+      border: 1px solid #555 !important;
+      border-radius: 6px !important;
+      color: #aaa !important;
+      box-shadow: none !important;
+    }
+    body.theme-mario .swal-btn-cancel:hover {
+      background: #444 !important;
+      color: #fff !important;
+    }
+  </style>
+</BaseLayout>

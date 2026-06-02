@@ -1,0 +1,675 @@
+@font-face {
+  font-family: 'Minecraftia';
+  src: url('/fonts/Minecraftia.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-bg: #1a1a1a;
+  --color-surface: #2d2d2dcb;
+  --color-surface-raised: #3d3d3d;
+  --color-gold: #ffff00;
+  --color-gold-dim: #aaaa00;
+  --color-emerald: #55ff55;
+  --color-emerald-dim: #00aa00;
+  --color-rose: #ff5555;
+  --color-rose-dim: #aa0000;
+  --color-sky: #55ffff;
+  --color-text: #ffffff;
+  --color-text-dim: #aaaaaa;
+  --color-border: #1e1e1f;
+
+  --font-display: 'Minecraftia', monospace;
+  --font-body: 'Minecraftia', monospace;
+
+  --radius: 0px;
+  --radius-sm: 0px;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  image-rendering: pixelated;
+}
+
+html {
+  font-size: 16px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #3d3d3d;
+  border: 1px solid #1e1e1f;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555555;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(6px, 1.5dvh, 20px) clamp(12px, 4dvw, 40px);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grain texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* Vault background layer (Minecraft animated WebP by default, overridden per theme) */
+.vault-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url('/images/minecraft/fondomine.webp') center / cover no-repeat;
+  pointer-events: none;
+}
+
+.vault-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* Typography */
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--color-gold);
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+h1 { font-size: clamp(18px, 3.5dvh, 30px); }
+h2 { font-size: clamp(16px, 3dvh, 26px); }
+h3 { font-size: clamp(14px, 2.5dvh, 22px); }
+
+/* Buttons — Minecraft Java Edition menu style */
+.btn {
+  background: #707070;
+  color: white;
+  padding: clamp(10px, 1.8dvh, 18px);
+  border: 3px solid #000;
+  border-top-color: #aaa;
+  border-left-color: #aaa;
+  font-size: clamp(13px, 1.8dvh, 18px);
+  width: 100%;
+  margin: clamp(5px, 0.6dvh, 8px) 0;
+  cursor: pointer;
+  font-family: 'Minecraftia', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-transform: uppercase;
+  box-sizing: border-box;
+  gap: clamp(10px, 1.5dvh, 16px);
+  text-align: left;
+  position: relative;
+  user-select: none;
+}
+
+.btn:hover:not(:disabled) {
+  background: #00aa00;
+}
+
+.btn:active:not(:disabled) {
+  border-top-color: #000;
+  border-left-color: #000;
+  border-bottom-color: #aaa;
+  border-right-color: #aaa;
+  padding: clamp(10px, 1.8dvh, 18px);
+}
+
+.btn:disabled {
+  background: #8b8b8b;
+  color: #555555;
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
+}
+
+.btn-icon {
+  font-size: clamp(18px, 2.8dvh, 28px);
+  width: clamp(28px, 4.5dvh, 38px);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Cards — Stone panel style */
+.card {
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  padding: clamp(8px, 2dvh, 20px);
+  box-shadow:
+    inset 2px 2px 0 rgba(255, 255, 255, 0.08),
+    inset -2px -2px 0 rgba(0, 0, 0, 0.3),
+    var(--shadow);
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.card::after {
+  display: none;
+}
+
+/* Form elements */
+input, select {
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.5dvh, 17px);
+  padding: clamp(6px, 0.8dvh, 12px) clamp(12px, 1.6dvh, 18px);
+  border: 2px solid #1e1e1f;
+  background: #0a0a0a;
+  color: var(--color-text);
+  outline: none;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.1),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+input:focus, select:focus {
+  border-color: #555555;
+  box-shadow:
+    inset 1px 1px 0 rgba(255, 255, 255, 0.15),
+    inset -1px -1px 0 rgba(0, 0, 0, 0.3),
+    0 0 0 2px rgba(85, 255, 85, 0.15);
+}
+
+/* Links */
+a {
+  color: var(--color-emerald);
+  text-decoration: none;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.5);
+}
+
+a:hover {
+  color: var(--color-gold);
+}
+
+/* Utilities */
+.container {
+  width: 100%;
+  max-width: min(900px, 94dvw);
+  height: auto;
+  min-height: 60dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+.text-center { text-align: center; }
+.text-muted { color: var(--color-text-dim); }
+.text-gold { color: var(--color-gold); }
+.text-green { color: var(--color-emerald); }
+.text-rose { color: var(--color-rose); }
+.mt-2 { margin-top: clamp(4px, 0.6dvh, 8px); }
+.mt-4 { margin-top: clamp(6px, 1.2dvh, 16px); }
+.mt-6 { margin-top: clamp(10px, 2dvh, 24px); }
+.mb-4 { margin-bottom: clamp(6px, 1.2dvh, 16px); }
+.gap-2 { gap: clamp(4px, 0.6dvh, 8px); }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+/* ==================== MARIO THEME ==================== */
+body.theme-mario {
+  --color-gold: #fbd000;
+  --color-gold-dim: #e5a800;
+  --color-surface: rgba(229, 37, 33, 0.85);
+  --color-surface-raised: rgba(200, 30, 30, 0.9);
+  --radius: 12px;
+  --radius-sm: 6px;
+  --font-display: 'Press Start 2P', monospace;
+  --font-body: 'Exo 2', system-ui, sans-serif;
+}
+
+body.theme-mario .vault-bg {
+  background: linear-gradient(180deg, #5c94fc 0%, #87ceeb 100%);
+}
+
+body.theme-mario .vault-bg::after {
+  background: radial-gradient(ellipse at 50% -20%, rgba(251, 208, 0, 0.08) 0%, transparent 60%);
+}
+
+body.theme-mario .card {
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
+}
+
+body.theme-mario .card::after {
+  display: block;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: background 0.5s ease;
+}
+
+body.theme-mario .btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(13px, 1.8dvh, 18px);
+  padding: clamp(10px, 1.8dvh, 18px) clamp(14px, 2.2dvh, 24px);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  text-shadow: none;
+  box-shadow: none;
+  letter-spacing: 0;
+  text-transform: none;
+  transition: all 0.25s ease;
+}
+
+body.theme-mario .btn:hover:not(:disabled) {
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.15);
+  background: #1f3457;
+  color: var(--color-text);
+}
+
+body.theme-mario .btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.15);
+  padding: clamp(10px, 1.8dvh, 18px) clamp(14px, 2.2dvh, 24px);
+}
+
+body.theme-mario .btn:disabled {
+  opacity: 0.35;
+  color: var(--color-text-dim);
+  box-shadow: none;
+  background: var(--color-surface-raised);
+  filter: grayscale(0.6);
+}
+
+body.theme-mario .vault-bg::before {
+  display: none;
+}
+
+body.theme-mario h1, body.theme-mario h2, body.theme-mario h3 {
+  font-family: var(--font-display);
+}
+
+body.theme-mario input, body.theme-mario select {
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.5dvh, 17px);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+body.theme-mario a {
+  color: var(--color-gold);
+  text-shadow: none;
+}
+
+body.theme-mario a:hover {
+  color: var(--color-emerald);
+}
+
+/* Hide scan line for Minecraft (uses background image instead) */
+.theme-minecraft .vault-bg::before {
+  display: none;
+}
+
+/* ==================== MARIO SCENE BACKGROUND ==================== */
+
+.mario-scene {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body.theme-mario .mario-scene {
+  display: block;
+}
+
+/* Clouds */
+.mario-cloud {
+  position: absolute;
+  top: var(--top, 10%);
+  left: -150px;
+  width: 120px;
+  height: 36px;
+  background: #fff;
+  border-radius: 18px;
+  animation: mario-cloud-drift var(--speed, 30s) linear infinite;
+  opacity: 0.9;
+  transform: scale(var(--scale, 1));
+}
+
+.mario-cloud::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 18px;
+  width: 60px;
+  height: 32px;
+  background: #fff;
+  border-radius: 16px;
+}
+
+.mario-cloud::after {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 14px;
+  width: 74px;
+  height: 26px;
+  background: #fff;
+  border-radius: 14px;
+}
+
+/* Pipes */
+.mario-pipe {
+  position: absolute;
+  bottom: 98px;
+  left: var(--left, 50%);
+  width: 96px;
+  height: var(--height, 200px);
+  background: #00a800;
+  border-left: 3px solid #00d800;
+  border-right: 3px solid #007800;
+  border-radius: 0 0 4px 4px;
+}
+
+.mario-pipe::before {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -9px;
+  width: calc(100% + 18px);
+  height: 16px;
+  background: #00a800;
+  border-left: 3px solid #00d800;
+  border-right: 3px solid #007800;
+  border-top: 4px solid #00d800;
+  border-radius: 4px 4px 0 0;
+}
+
+.mario-pipe::after {
+  content: '';
+  position: absolute;
+  top: -16px;
+  left: -9px;
+  width: calc(100% + 18px);
+  height: 12px;
+  background: linear-gradient(90deg,
+    transparent 9px,
+    #005800 9px, #005800 calc(100% - 9px),
+    transparent calc(100% - 9px));
+}
+
+/* Question block */
+.mario-question-block {
+  position: absolute;
+  bottom: 580px;
+  right: 10%;
+  width: 110px;
+  height: 110px;
+  background: linear-gradient(135deg, #fbd000, #e5a800);
+  border: 3px solid #c88c00;
+  border-top-color: #ffe44d;
+  border-left-color: #ffe44d;
+  animation: mario-float 2s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+.mario-question-block::after {
+  content: '?';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 80px;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000;
+  line-height: 1;
+}
+
+/* Ground */
+.mario-ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background-color: #c84c0c;
+  border-top: 15px solid #00a800;
+  background-image:
+    linear-gradient(90deg, transparent 25px, rgba(0,0,0,0.1) 25px, rgba(0,0,0,0.1) 27px, transparent 27px),
+    linear-gradient(0deg, transparent 23px, rgba(0,0,0,0.08) 23px, rgba(0,0,0,0.08) 25px, transparent 25px);
+  background-size: 54px 100%, 100% 25px;
+}
+
+/* ==================== MINECRAFT SCENE BACKGROUND ==================== */
+
+.mc-scene {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* body.theme-minecraft .mc-scene {
+  display: block;
+} */
+
+/* Sun */
+.mc-sun {
+  position: absolute;
+  top: 6%;
+  right: 15%;
+  width: 44px;
+  height: 44px;
+  background: #ffffc0;
+  box-shadow: 0 0 30px rgba(255, 255, 200, 0.3);
+  animation: mc-sun-glow 4s ease-in-out infinite alternate;
+  border-radius: 2px;
+  image-rendering: pixelated;
+}
+
+/* Clouds — blocky Minecraft style */
+.mc-cloud {
+  position: absolute;
+  top: var(--top, 10%);
+  left: -240px;
+  width: 200px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.85);
+  animation: mc-cloud-drift var(--speed, 45s) linear infinite;
+  border-radius: 2px;
+}
+
+.mc-cloud::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 28px;
+  width: 96px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+}
+
+.mc-cloud::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: 40px;
+  width: 60px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+}
+
+/* Trees */
+.mc-tree {
+  position: absolute;
+  bottom: 148px;
+  left: var(--left, 50%);
+  width: 60px;
+  height: 90px;
+  background: #6b4226;
+  border-left: 2px solid #8b5e3c;
+  border-right: 2px solid #4a2e18;
+  border-radius: 1px;
+}
+
+.mc-tree::before {
+  content: '';
+  position: absolute;
+  bottom: 62px;
+  left: -20px;
+  width: 90px;
+  height: 80px;
+  background: #2d7d2d;
+  border: 2px solid #1a5c1a;
+  border-radius: 2px;
+}
+
+.mc-tree::after {
+  content: '';
+  position: absolute;
+  bottom: 80px;
+  left: -6px;
+  width: 48px;
+  height: 8px;
+  background: #3a9a3a;
+  border-radius: 1px;
+}
+
+/* Ground — grass block pattern */
+.mc-ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 150px;
+  background-color: #8b6b3d;
+  border-top: 6px solid #5a8a3c;
+  background-image:
+    linear-gradient(90deg, transparent 23px, rgba(0,0,0,0.06) 23px, rgba(0,0,0,0.06) 25px, transparent 25px);
+  background-size: 50px 100%;
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg) scale(0.3); opacity: 0; }
+}
+
+@keyframes scan-line {
+  0% { top: -2px; }
+  100% { top: 100%; }
+}
+
+@keyframes mario-cloud-drift {
+  0% { transform: translateX(0) scale(var(--scale, 1)); }
+  100% { transform: translateX(calc(100vw + 360px)) scale(var(--scale, 1)); }
+}
+
+@keyframes mario-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes mc-cloud-drift {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(calc(100vw + 480px)); }
+}
+
+@keyframes mc-sun-glow {
+  0% { box-shadow: 0 0 20px rgba(255, 255, 200, 0.2); }
+  100% { box-shadow: 0 0 50px rgba(255, 255, 200, 0.5); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease forwards;
+}
+
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.3s; }
+.delay-4 { animation-delay: 0.4s; }
+.delay-5 { animation-delay: 0.5s; }
+
+/* Pixel border utility */
+.pixel-border {
+  border: 4px solid var(--color-gold);
+  box-shadow:
+    inset -4px -4px 0 rgba(0, 0, 0, 0.3),
+    4px 4px 0 rgba(0, 0, 0, 0.2);
+  image-rendering: pixelated;
+}
+
+/* Testing-only elements — toggle display:none for production */
+.test-only {
+  /* display: none; */
+}

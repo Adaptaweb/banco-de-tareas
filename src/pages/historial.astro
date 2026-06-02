@@ -1,0 +1,482 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ThemeSelector from '../components/ThemeSelector.astro';
+import { getHistory } from '../lib/db';
+import { formatoTiempo } from '../lib/telegram';
+
+const historial = getHistory().map(r => ({
+  ...r,
+  tiempo_formato: formatoTiempo(r.tiempo_ganado),
+}));
+
+const total_misiones = historial.reduce((s, d) => s + d.tareas_completadas.length, 0);
+const total_tiempo = historial.reduce((s, d) => s + d.tiempo_ganado, 0);
+
+const mejor_dia = historial.reduce((best, d) =>
+  !best || d.tareas_completadas.length > best.tareas_completadas.length ? d : best,
+  null as typeof historial[0] | null
+);
+
+function calcularRacha() {
+  const sorted = [...historial].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  if (!sorted.length) return 0;
+  let streak = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    if (sorted[i].tareas_completadas.length === 0) break;
+    if (i > 0) {
+      const prev = new Date(sorted[i - 1].fecha);
+      const curr = new Date(sorted[i].fecha);
+      if ((prev.getTime() - curr.getTime()) / 86400000 !== 1) break;
+    }
+    streak++;
+  }
+  return streak;
+}
+const racha = calcularRacha();
+
+const hoy = new Date().toISOString().slice(0, 10);
+const diaSemana = (d: Date) => d.toLocaleDateString('es-CL', { weekday: 'short' }).replace('.', '');
+
+const ultimos7 = Array.from({ length: 7 }, (_, i) => {
+  const date = new Date();
+  date.setDate(date.getDate() - (6 - i));
+  const dateStr = date.toISOString().slice(0, 10);
+  const day = historial.find(h => h.fecha === dateStr);
+  return { fecha: dateStr, dia: diaSemana(date), tareas: day?.tareas_completadas.length || 0 };
+});
+const maxTareas7 = Math.max(...ultimos7.map(d => d.tareas), 1);
+
+const ultimos30 = Array.from({ length: 30 }, (_, i) => {
+  const date = new Date();
+  date.setDate(date.getDate() - (29 - i));
+  const dateStr = date.toISOString().slice(0, 10);
+  const day = historial.find(h => h.fecha === dateStr);
+  const tareas = day?.tareas_completadas.length || 0;
+  const level = Math.min(tareas, 4);
+  const colors = ['var(--color-bg)', 'var(--color-emerald-dim)', 'var(--color-emerald)', 'var(--color-gold-dim)', 'var(--color-gold)'];
+  return { fecha: dateStr, tareas, level, color: colors[level] };
+});
+---
+
+<BaseLayout title="Historial — Banco de Tareas">
+  <ThemeSelector />
+
+  <div class="container animate-fade-in">
+    <div class="card">
+      <h1 class="text-center">Historial de Misiones</h1>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-value" id="stat-misiones">{total_misiones}</span>
+          <span class="stat-label">Misiones</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value stat-time">{formatoTiempo(total_tiempo)}</span>
+          <span class="stat-label">Tiempo</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-racha">{racha}</span>
+          <span class="stat-label">Racha</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="stat-mejor">{mejor_dia?.tareas_completadas.length || 0}</span>
+          <span class="stat-label">Mejor Día</span>
+        </div>
+      </div>
+
+      {historial.length > 0 ? (
+        <>
+          <div class="chart-wrapper">
+            <div class="chart-bars">
+              {ultimos7.map(d => (
+                <div class="chart-col" title={`${d.fecha}: ${d.tareas} misiones`}>
+                  <div class="chart-bar" style={`height: ${(d.tareas / maxTareas7) * 100}%`}>
+                    <span class="chart-bar-label">{d.tareas}</span>
+                  </div>
+                  <span class="chart-day">{d.dia}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="heatmap" title="Últimos 30 días">
+            {ultimos30.map(d => (
+              <div class="heatmap-cell" style={`background:${d.color}`} title={`${d.fecha}: ${d.tareas} misiones`}></div>
+            ))}
+          </div>
+        </>
+      ) : null}
+
+      {historial.length > 0 ? (
+        <div class="timeline" id="timeline">
+          {historial.map((item, i) => (
+            <div class="timeline-item" style={`animation-delay: ${i * 0.06}s`}>
+              <div class="timeline-dot" data-best={item === mejor_dia ? '' : null}></div>
+              <div class="timeline-content">
+                <div class="timeline-header" data-toggle>
+                  <span class="timeline-fecha">
+                    <span class="timeline-fecha-dot"></span>
+                    {item.fecha === hoy ? '✨ HOY' : item.fecha}
+                  </span>
+                  <span class="timeline-tiempo">{item.tiempo_formato}</span>
+                  <span class="timeline-arrow">▶</span>
+                </div>
+                <div class="timeline-body">
+                  <div class="timeline-tareas">
+                    {item.tareas_completadas.length > 0 ? (
+                      <ul>
+                        {item.tareas_completadas.map(t => <li>{t}</li>)}
+                      </ul>
+                    ) : (
+                      <p class="text-muted">Ninguna misión completada</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="empty-state">
+          <p class="text-muted">Aún no hay registros. El historial se guarda al final de cada día.</p>
+        </div>
+      )}
+
+      <div class="nav-links">
+        <a href="/admin">Panel de Control</a>
+        <a href="/">Volver al Inicio</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function animarContadores() {
+      const animar = (el, target, suffix = '') => {
+        const dur = 800;
+        const start = performance.now();
+        const from = 0;
+        function tick(now) {
+          const t = Math.min((now - start) / dur, 1);
+          const ease = 1 - Math.pow(1 - t, 3);
+          el.textContent = Math.floor(from + (target - from) * ease) + suffix;
+          if (t < 1) requestAnimationFrame(tick);
+          else el.textContent = target + suffix;
+        }
+        requestAnimationFrame(tick);
+      };
+      const m = document.getElementById('stat-misiones');
+      const r = document.getElementById('stat-racha');
+      if (m) animar(m, parseInt(m.textContent));
+      if (r) animar(r, parseInt(r.textContent));
+    }
+
+    function initTimeline() {
+      document.querySelectorAll('[data-toggle]').forEach(header => {
+        header.addEventListener('click', () => {
+          const content = header.parentElement.querySelector('.timeline-body');
+          const arrow = header.querySelector('.timeline-arrow');
+          if (!content) return;
+          const isOpen = content.classList.contains('open');
+          content.classList.toggle('open');
+          if (arrow) arrow.classList.toggle('open');
+        });
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      animarContadores();
+      initTimeline();
+    });
+  </script>
+
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(4px, 0.6dvh, 8px);
+      margin-bottom: clamp(6px, 1dvh, 14px);
+    }
+    .stat-item {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      padding: clamp(4px, 0.6dvh, 10px);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1px, 0.2dvh, 4px);
+    }
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: clamp(18px, 2.5dvh, 26px);
+      color: var(--color-gold);
+      line-height: 1.2;
+    }
+    .stat-time {
+      font-size: clamp(13px, 1.6dvh, 22px);
+    }
+    .stat-label {
+      font-family: var(--font-body);
+      font-size: clamp(10px, 1.2dvh, 14px);
+      color: var(--color-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .chart-wrapper {
+      margin-bottom: clamp(4px, 0.6dvh, 10px);
+      padding: clamp(4px, 0.6dvh, 8px) 0;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+    }
+    .chart-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: clamp(2px, 0.3dvh, 4px);
+      height: clamp(40px, 6dvh, 70px);
+    }
+    .chart-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      height: 100%;
+      position: relative;
+    }
+    .chart-bar {
+      width: 100%;
+      background: linear-gradient(180deg, var(--color-emerald), var(--color-emerald-dim));
+      min-height: 2px;
+      transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1px solid #000;
+      border-top: none;
+      position: relative;
+    }
+    .chart-bar-label {
+      position: absolute;
+      top: -2px;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      font-family: var(--font-display);
+      font-size: clamp(9px, 1dvh, 13px);
+      color: var(--color-text-dim);
+      line-height: 1;
+    }
+    .chart-day {
+      font-family: var(--font-body);
+      font-size: clamp(8px, 0.9dvh, 12px);
+      color: var(--color-text-dim);
+      margin-top: 2px;
+      text-transform: uppercase;
+    }
+
+    .heatmap {
+      display: flex;
+      gap: 2px;
+      margin-bottom: clamp(6px, 1dvh, 12px);
+      flex-wrap: wrap;
+    }
+    .heatmap-cell {
+      width: clamp(6px, 0.8dvh, 10px);
+      height: clamp(6px, 0.8dvh, 10px);
+      border: 1px solid #000;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    .heatmap-cell:hover {
+      transform: scale(1.8);
+      z-index: 2;
+    }
+
+    .timeline {
+      position: relative;
+      padding-left: clamp(14px, 2.5dvh, 22px);
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: clamp(4px, 0.6dvh, 7px);
+      top: 6px;
+      bottom: 6px;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--color-gold), var(--color-emerald), transparent);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: clamp(4px, 0.6dvh, 10px);
+      animation: fadeIn 0.35s ease forwards;
+      opacity: 0;
+    }
+    .timeline-dot {
+      position: absolute;
+      left: clamp(-14px, -2.2dvh, -18px);
+      top: clamp(8px, 1.2dvh, 14px);
+      width: clamp(6px, 0.8dvh, 10px);
+      height: clamp(6px, 0.8dvh, 10px);
+      background: var(--color-emerald);
+      border: 2px solid var(--color-bg);
+      animation: timeline-dot-pulse 2s ease-in-out infinite;
+      z-index: 1;
+    }
+    .timeline-dot[data-best] {
+      background: var(--color-gold);
+      box-shadow: 0 0 10px var(--color-gold);
+    }
+    .timeline-content {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      padding: clamp(4px, 0.6dvh, 10px) clamp(6px, 1dvh, 14px);
+      transition: border-color 0.2s;
+    }
+    .timeline-content:hover {
+      border-color: var(--color-gold-dim);
+    }
+    .timeline-header {
+      display: flex;
+      align-items: center;
+      gap: clamp(4px, 0.5dvh, 8px);
+      cursor: pointer;
+      user-select: none;
+    }
+    .timeline-fecha {
+      font-family: var(--font-display);
+      font-size: clamp(12px, 1.3dvh, 16px);
+      color: var(--color-emerald);
+      flex: 1;
+    }
+    .timeline-fecha-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--color-emerald);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .timeline-tiempo {
+      font-family: var(--font-display);
+      font-size: clamp(11px, 1.2dvh, 15px);
+      color: var(--color-gold);
+      white-space: nowrap;
+    }
+    .timeline-arrow {
+      font-size: clamp(6px, 0.7dvh, 9px);
+      color: var(--color-text-dim);
+      transition: transform 0.3s ease;
+      flex-shrink: 0;
+    }
+    .timeline-arrow.open {
+      transform: rotate(90deg);
+    }
+    .timeline-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, opacity 0.25s ease;
+      opacity: 0;
+    }
+    .timeline-body.open {
+      max-height: 300px;
+      opacity: 1;
+    }
+    .timeline-tareas {
+      padding-top: clamp(4px, 0.5dvh, 8px);
+      border-top: 1px solid var(--color-border);
+      margin-top: clamp(4px, 0.5dvh, 8px);
+    }
+
+    @media (min-width: 700px) {
+      .timeline {
+        columns: 2;
+        column-gap: clamp(16px, 3dvh, 28px);
+        column-rule: 1px solid var(--color-border);
+        padding-left: 0;
+      }
+      .timeline::before { display: none; }
+      .timeline-item {
+        break-inside: avoid;
+        padding-left: clamp(14px, 2.5dvh, 22px);
+        position: relative;
+      }
+      .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: clamp(4px, 0.6dvh, 7px);
+        top: 6px;
+        bottom: 6px;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--color-gold), var(--color-emerald), transparent);
+      }
+      .timeline-dot {
+        left: clamp(-14px, -2.2dvh, -18px);
+      }
+    }
+    .timeline-tareas ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .timeline-tareas li {
+      font-size: clamp(12px, 1.4dvh, 16px);
+      padding: clamp(2px, 0.3dvh, 4px) 0;
+      color: var(--color-text);
+    }
+    .timeline-tareas li::before {
+      content: '✅ ';
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: clamp(16px, 3dvh, 40px) clamp(12px, 2vw, 16px);
+      font-family: var(--font-body);
+    }
+
+    .nav-links {
+      display: flex;
+      justify-content: center;
+      gap: clamp(8px, 1.5dvh, 20px);
+      margin-top: clamp(6px, 1dvh, 14px);
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+    .nav-links a {
+      font-size: clamp(13px, 1.5dvh, 16px);
+      font-family: var(--font-body);
+      font-weight: 600;
+    }
+
+    h1 {
+      font-size: clamp(16px, 2.5dvh, 24px);
+      margin-bottom: clamp(6px, 1dvh, 14px);
+    }
+
+    @keyframes timeline-dot-pulse {
+      0%, 100% { box-shadow: 0 0 6px var(--color-emerald); }
+      50% { box-shadow: 0 0 12px var(--color-emerald); }
+    }
+
+    body.theme-mario .timeline-dot {
+      border-radius: 50%;
+    }
+    body.theme-mario .timeline-dot[data-best] {
+      background: var(--color-gold);
+      box-shadow: 0 0 10px var(--color-gold);
+    }
+    body.theme-mario .chart-bar {
+      border-radius: 4px 4px 0 0;
+    }
+    body.theme-mario .heatmap-cell {
+      border-radius: 2px;
+    }
+    body.theme-mario .stat-item {
+      border-radius: var(--radius-sm);
+    }
+    body.theme-mario .timeline-content {
+      border-radius: var(--radius-sm);
+    }
+    body.theme-mario .timeline-fecha-dot {
+      border-radius: 50%;
+    }
+  </style>
+</BaseLayout>

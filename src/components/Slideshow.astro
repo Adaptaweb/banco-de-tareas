@@ -1,0 +1,83 @@
+<div id="slideshow-container">
+  <div class="slideshow-overlay"></div>
+  <img id="slideshow-img" src="" alt="Slideshow" />
+  <div class="slideshow-clock">
+    <div id="slideshow-time"></div>
+    <div id="slideshow-date"></div>
+  </div>
+</div>
+
+<style>
+  #slideshow-container {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100dvh;
+    background: #000;
+    z-index: 9999;
+    display: none;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+  }
+
+  #slideshow-container.active {
+    display: block;
+    opacity: 1;
+  }
+
+  .slideshow-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+      to bottom,
+      transparent 60%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+    pointer-events: none;
+  }
+
+  #slideshow-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 1.5s ease-in-out;
+    animation: ken-burns 30s ease-in-out infinite alternate;
+  }
+
+  #slideshow-img.fade-out {
+    opacity: 0;
+  }
+
+  @keyframes ken-burns {
+    0% { transform: scale(1) translate(0, 0); }
+    50% { transform: scale(1.08) translate(-1%, -0.5%); }
+    100% { transform: scale(1.05) translate(0.5%, -1%); }
+  }
+
+  .slideshow-clock {
+    position: absolute;
+    bottom: clamp(16px, 3dvh, 40px);
+    right: clamp(16px, 3dvw, 40px);
+    z-index: 2;
+    text-align: right;
+    color: white;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+  }
+
+  #slideshow-time {
+    font-size: clamp(2rem, 5dvh, 4rem);
+    font-weight: 700;
+    font-family: var(--font-display);
+    line-height: 1;
+    letter-spacing: 4px;
+  }
+
+  #slideshow-date {
+    font-size: clamp(18px, 2.5dvh, 26px);
+    font-family: var(--font-body);
+    margin-top: 4px;
+    opacity: 0.8;
+    font-weight: 600;
+  }
+</style>

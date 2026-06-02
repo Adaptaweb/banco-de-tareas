@@ -1,0 +1,94 @@
+---
+import { loadState } from '../lib/db';
+import HamburgerMenu from '../components/HamburgerMenu.astro';
+const db = loadState();
+const tieneTareas = db.tareas_activas.length > 0;
+const pageTitle = Astro.props.title || 'Banco de Tareas';
+---
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%233d3d3d' rx='2'/%3E%3Crect x='4' y='12' width='24' height='16' fill='%23707070'/%3E%3Crect x='6' y='14' width='20' height='12' fill='%23555555'/%3E%3Crect x='12' y='6' width='8' height='8' fill='%23c6c6c6'/%3E%3Crect x='13' y='7' width='6' height='6' fill='%23808080'/%3E%3Crect x='7' y='22' width='5' height='4' fill='%23808080'/%3E%3Crect x='20' y='22' width='5' height='4' fill='%23808080'/%3E%3Crect x='7' y='23' width='4' height='3' fill='%23444444'/%3E%3Crect x='21' y='23' width='4' height='3' fill='%23444444'/%3E%3Crect x='15' y='15' width='2' height='2' fill='%23ffff55'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles/global.css" />
+  <title>{pageTitle}</title>
+</head>
+<body class="theme-minecraft">
+  <div class="vault-bg">
+    <div class="mario-scene">
+      <div class="mario-cloud" style="--speed:25s;--top:8%;--scale:1"></div>
+      <div class="mario-cloud" style="--speed:40s;--top:18%;--scale:0.7"></div>
+      <div class="mario-cloud" style="--speed:50s;--top:5%;--scale:0.6"></div>
+      <div class="mario-pipe" style="--height:120px;--left:12%"></div>
+      <div class="mario-pipe" style="--height:80px;--left:75%"></div>
+      <div class="mario-pipe" style="--height:160px;--left:55%"></div>
+      <div class="mario-question-block"></div>
+      <div class="mario-ground"></div>
+    </div>
+    <div class="mc-scene">
+      <div class="mc-sun"></div>
+      <div class="mc-cloud" style="--speed:45s;--top:12%;--scale:1"></div>
+      <div class="mc-cloud" style="--speed:60s;--top:22%;--scale:0.8"></div>
+      <div class="mc-cloud" style="--speed:55s;--top:6%;--scale:0.7"></div>
+      <div class="mc-tree" style="--left:10%"></div>
+      <div class="mc-tree" style="--left:82%"></div>
+      <div class="mc-ground"></div>
+    </div>
+  </div>
+  <HamburgerMenu />
+  <slot />
+  <script>
+    const soundsMap = {
+      minecraft: {
+        click: '/sounds/minecraft/menuclick.mp3',
+        coin: '/sounds/minecraft/moneda.mp3',
+        error: '/sounds/minecraft/error.mp3',
+        victory: '/sounds/minecraft/victory.mp3',
+      },
+      mario: {
+        click: '/sounds/mario/mario_click.mp3',
+        coin: '/sounds/mario/mario_coin.mp3',
+        error: '/sounds/mario/mario_error.mp3',
+        victory: '/sounds/mario/mario_victory.mp3',
+      },
+    };
+
+    const savedTheme = localStorage.getItem('temaBanco') || 'minecraft';
+
+    function aplicarTema(tema) {
+      document.body.className = '';
+      if (tema === 'mario') document.body.classList.add('theme-mario');
+      else document.body.classList.add('theme-minecraft');
+      localStorage.setItem('temaBanco', tema);
+
+      const sel = document.getElementById('themeSelect');
+      if (sel) sel.value = tema;
+
+      const aClic = document.getElementById('audioClic');
+      const aMoneda = document.getElementById('audioMoneda');
+      const aError = document.getElementById('audioError');
+      const aVictory = document.getElementById('audioVictory');
+      if (aClic && soundsMap[tema]) {
+        aClic.src = soundsMap[tema].click;
+        aMoneda.src = soundsMap[tema].coin;
+        aError.src = soundsMap[tema].error;
+        aVictory.src = soundsMap[tema].victory;
+        [aClic, aMoneda, aError, aVictory].forEach(a => a.load());
+      }
+    }
+
+    aplicarTema(savedTheme);
+
+    window.cambiarTema = function(tema) {
+      aplicarTema(tema);
+      const aClic = document.getElementById('audioClic');
+      if (aClic) { aClic.currentTime = 0; aClic.play().catch(() => {}); }
+    };
+  </script>
+</body>
+</html>
