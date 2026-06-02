@@ -41,6 +41,7 @@ function initTables() {
     );
   `);
   migrateTiempoColumn();
+  migrateEstadoMisionColumn();
   initSlideshowTable();
 }
 
@@ -54,6 +55,12 @@ function migrateTiempoColumn() {
     const defaultTiempo = Math.floor(120 / count);
     db.prepare("UPDATE tareas_activas SET tiempo = ?").run(defaultTiempo);
   }
+}
+
+function migrateEstadoMisionColumn() {
+  const cols = db.prepare("PRAGMA table_info(estado_actual)").all() as { name: string }[];
+  if (cols.some(c => c.name === 'estado_mision')) return;
+  db.exec("ALTER TABLE estado_actual ADD COLUMN estado_mision TEXT DEFAULT 'esperando'");
 }
 
 function migrateLegacyJson() {
