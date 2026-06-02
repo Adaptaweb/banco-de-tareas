@@ -128,7 +128,7 @@ const total = tareas.length;
         document.getElementById('tareasTxt').innerText = 'MISIONES: ' + data.aprobadas.length + ' / ' + data.total_tareas;
         const contenido = document.getElementById('contenido');
         if (!contenido) return;
-        if (data.total_tareas > 0 && data.aprobadas.length === data.total_tareas) {
+        if (data.total_tareas > 0 && data.aprobadas.length === data.total_tareas && data.valor !== 'esperando') {
           if (!finalActivo) {
             finalActivo = true; aVictory.play();
             document.body.classList.add('victory-mode');
