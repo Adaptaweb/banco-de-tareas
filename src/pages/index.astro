@@ -248,25 +248,33 @@ const total = tareas.length;
     function buildPlaylist(images) {
       return Promise.all(images.map(src => checkOrientation(src)))
         .then(() => {
-          const portraits = images.filter(src => orientationCache[src] === 'portrait');
-          const landscapes = images.filter(src => orientationCache[src] === 'landscape');
+          const isPortraitOrientation = window.innerHeight > window.innerWidth;
           const pl = [];
 
-          for (let i = 0; i < portraits.length - 1; i += 2) {
-            pl.push({ type: 'pair', src: [portraits[i], portraits[i+1]] });
-          }
-
-          if (portraits.length % 2 !== 0) {
-            const last = portraits[portraits.length - 1];
-            if (landscapes.length > 0) {
-              pl.push({ type: 'pair', src: [last, landscapes.shift()] });
-            } else {
-              pl.push({ type: 'single', src: last });
+          if (isPortraitOrientation) {
+            for (const src of images) {
+              pl.push({ type: 'single', src });
             }
-          }
+          } else {
+            const portraits = images.filter(src => orientationCache[src] === 'portrait');
+            const landscapes = images.filter(src => orientationCache[src] === 'landscape');
 
-          for (const src of landscapes) {
-            pl.push({ type: 'single', src });
+            for (let i = 0; i < portraits.length - 1; i += 2) {
+              pl.push({ type: 'pair', src: [portraits[i], portraits[i+1]] });
+            }
+
+            if (portraits.length % 2 !== 0) {
+              const last = portraits[portraits.length - 1];
+              if (landscapes.length > 0) {
+                pl.push({ type: 'pair', src: [last, landscapes.shift()] });
+              } else {
+                pl.push({ type: 'single', src: last });
+              }
+            }
+
+            for (const src of landscapes) {
+              pl.push({ type: 'single', src });
+            }
           }
 
           return pl;
@@ -316,8 +324,18 @@ const total = tareas.length;
         }, 60000);
       }).catch(() => {});
     }
-    ['mousemove','mousedown','keypress','touchstart','scroll'].forEach(e => {
-      document.addEventListener(e, resetInactivityTimer, true);
+    function onUserInteraction(ev) {
+      if (isSlideshowActive) {
+        hideSlideshow();
+        ev.stopPropagation();
+        return;
+      }
+      clearTimeout(timeoutInactivity);
+      timeoutInactivity = setTimeout(startSlideshow, TIME_INACTIVITY);
+    }
+
+    ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'].forEach(e => {
+      document.addEventListener(e, onUserInteraction, true);
     });
     resetInactivityTimer();
   </script>
