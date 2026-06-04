@@ -28,16 +28,16 @@ const animDelay = (index * 0.08).toFixed(2);
 <style>
   .task-btn {
     position: relative;
-    height: clamp(84px, 6dvh, 64px);
+    height: clamp(48px, 6dvh, 84px);
   }
 
   .task-name {
-    font-size: clamp(19px, 1.6dvh, 17px);
+    font-size: clamp(13px, 2.2dvh, 20px);
     letter-spacing: 1px;
   }
 
   .task-time {
-    font-size: clamp(19px, 1.6dvh, 12px);
+    font-size: clamp(11px, 1.8dvh, 16px);
     color: var(--color-gold);
     font-family: var(--font-display);
     margin-left: auto;
@@ -45,7 +45,23 @@ const animDelay = (index * 0.08).toFixed(2);
     white-space: nowrap;
   }
   .btn-icon {
-      font-size: clamp(2rem, 1.3dvh, 1.2rem);
-    }
+    font-size: clamp(1.1rem, 2.5dvh, 1.8rem);
+  }
 
+  @media (orientation: portrait) and (max-width: 650px) {
+    .task-btn {
+      height: auto;
+      min-height: clamp(52px, 8dvh, 72px);
+      padding: clamp(8px, 1.5dvh, 14px) clamp(10px, 2dvw, 16px);
+    }
+    .task-name {
+      font-size: clamp(15px, 2.5dvh, 22px);
+    }
+    .task-time {
+      font-size: clamp(13px, 2dvh, 18px);
+    }
+    .btn-icon {
+      font-size: clamp(1.3rem, 3dvh, 2rem);
+    }
+  }
 </style>

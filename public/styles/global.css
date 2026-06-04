@@ -68,6 +68,45 @@ body {
   overflow: hidden;
 }
 
+/* Slow device — desactivar animaciones y transiciones */
+body.slow-device *,
+body.slow-device *::before,
+body.slow-device *::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+}
+
+body.slow-device.theme-mario .mario-scene {
+  display: none !important;
+}
+
+body.slow-device.theme-mario .vault-bg {
+  background: url('/images/mario/fondo_mario.webp') center / cover no-repeat;
+}
+
+body.slow-device.theme-minecraft .vault-bg {
+  background: url('/images/minecraft/fondo_titulo.webp') center / cover no-repeat;
+}
+
+/* Portrait responsive */
+@media (orientation: portrait) and (max-width: 650px) {
+  body {
+    overflow-y: auto;
+    justify-content: flex-start;
+    padding: clamp(6px, 1.5dvh, 12px) clamp(8px, 2dvw, 16px);
+  }
+  .container {
+    max-width: 100dvw;
+    max-height: none;
+    min-height: auto;
+  }
+  .card {
+    max-height: none;
+    min-height: auto;
+  }
+}
+
 /* Grain texture overlay */
 body::before {
   content: '';
@@ -226,6 +265,7 @@ a:hover {
   flex-direction: column;
   position: relative;
   z-index: 1;
+  padding-top: clamp(44px, 6dvh, 56px);
 }
 
 .text-center { text-align: center; }

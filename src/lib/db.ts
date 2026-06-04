@@ -11,9 +11,9 @@ export function getDb(): Database.Database {
   if (!db) {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
-    initTables();
-    migrateLegacyJson();
-    seedDefaults();
+  initTables();
+  migrateLegacyJson();
+  seedDefaults();
   }
   return db;
 }
@@ -38,21 +38,8 @@ function initTables() {
       tareas_completadas TEXT
     );
   `);
-  migrateTiempoColumn();
   migrateEstadoMisionColumn();
   initSlideshowTable();
-}
-
-function migrateTiempoColumn() {
-  const cols = db.prepare("PRAGMA table_info(tareas_activas)").all() as { name: string }[];
-  if (cols.some(c => c.name === 'tiempo')) return;
-
-  db.exec("ALTER TABLE tareas_activas ADD COLUMN tiempo INTEGER NOT NULL DEFAULT 0");
-  const count = (db.prepare("SELECT COUNT(*) as cnt FROM tareas_activas").get() as { cnt: number }).cnt;
-  if (count > 0) {
-    const defaultTiempo = Math.floor(120 / count);
-    db.prepare("UPDATE tareas_activas SET tiempo = ?").run(defaultTiempo);
-  }
 }
 
 function migrateEstadoMisionColumn() {
@@ -79,10 +66,8 @@ function migrateLegacyJson() {
     ).run(fecha, tiempo, aprobadas);
 
     const insertTask = db.prepare('INSERT OR IGNORE INTO tareas_activas (nombre, icono, tiempo) VALUES (?, ?, ?)');
-    const numTasks = (data.activas || []).length;
-    const defaultTiempo = numTasks > 0 ? Math.floor(120 / numTasks) : 15;
     for (const t of data.activas || []) {
-      insertTask.run(t.nombre, t.icono || '📌', t.tiempo || defaultTiempo);
+      insertTask.run(t.nombre, t.icono || '📌', t.tiempo || 15);
     }
   } catch (e) {
     console.error('Error migrating JSON:', e);
@@ -99,13 +84,13 @@ function seedDefaults() {
   ).run(hoy);
 
   const defaults = [
-    { nombre: 'Hacer la Cama', icono: '🛏️', tiempo: 17 },
-    { nombre: 'Lavarse los dientes', icono: '🪥', tiempo: 17 },
-    { nombre: 'Ordenar la Pieza', icono: '📦', tiempo: 17 },
-    { nombre: 'Recoger la Ropa sucia', icono: '👕', tiempo: 17 },
-    { nombre: 'Ayuda a regar las plantas', icono: '🌻', tiempo: 17 },
-    { nombre: 'Darle comida y agua a los perros', icono: '🦴', tiempo: 17 },
-    { nombre: 'Bañarse', icono: '🚿', tiempo: 17 },
+    { nombre: 'Hacer la Cama', icono: '🛏️', tiempo: 15 },
+    { nombre: 'Lavarse los dientes', icono: '🪥', tiempo: 15 },
+    { nombre: 'Ordenar la Pieza', icono: '📦', tiempo: 15 },
+    { nombre: 'Recoger la Ropa sucia', icono: '👕', tiempo: 15 },
+    { nombre: 'Ayuda a regar las plantas', icono: '🌻', tiempo: 15 },
+    { nombre: 'Darle comida y agua a los perros', icono: '🦴', tiempo: 15 },
+    { nombre: 'Bañarse', icono: '🚿', tiempo: 15 },
   ];
 
   const insert = db.prepare('INSERT OR IGNORE INTO tareas_activas (nombre, icono, tiempo) VALUES (?, ?, ?)');

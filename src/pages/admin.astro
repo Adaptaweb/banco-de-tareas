@@ -14,7 +14,7 @@ const db = loadState();
     <div class="card">
       <h1 class="text-center mb-4">Panel de Control</h1>
 
-      <p class="text-muted text-center" style="font-size:clamp(19px,1.5dvh,17px);margin-bottom:clamp(8px,1.2dvh,18px);">
+      <p class="text-muted text-center" style="font-size:clamp(13px,1.5dvh,17px);margin-bottom:clamp(8px,1.2dvh,18px);">
         {db.tareas_activas.length} misiones activas
       </p>
 
@@ -43,9 +43,24 @@ const db = loadState();
       <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">Agregar Misión</h2>
 
       <div class="form-group">
-        <input type="text" id="icono_nuevo" placeholder="Icono" maxlength="2" class="input-icono" />
+        <button type="button" class="btn-icon-picker" id="btn-icono-nuevo">
+          <span class="icon-picker-selected">📌</span>
+          <span class="icon-picker-arrow">▼</span>
+        </button>
         <input type="text" id="nombre_nuevo" placeholder="Nombre de la Misión" class="input-nombre" />
-        <input type="number" id="tiempo_nuevo" placeholder="Minutos" value="15" min="1" class="input-tiempo" />
+        <div class="time-wrapper">
+          <span class="time-icon">⏱</span>
+          <select id="tiempo_nuevo" class="input-tiempo">
+            <option value="5">5 min</option>
+            <option value="10">10 min</option>
+            <option value="15" selected>15 min</option>
+            <option value="20">20 min</option>
+            <option value="25">25 min</option>
+            <option value="30">30 min</option>
+            <option value="45">45 min</option>
+            <option value="60">60 min</option>
+          </select>
+        </div>
         <button class="btn-sm btn-primary" onclick="agregarTarea()">Agregar</button>
       </div>
 
@@ -60,9 +75,9 @@ const db = loadState();
         <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">Testing</h2>
         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
           <button class="btn-sm btn-danger" onclick="limpiarHoy()">Limpiar datos de hoy</button>
-          <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
+         <!-- <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
           <button class="btn-sm" style="background:#22c55e;color:#fff;" onclick="testAnimacion('aprobar')">Probar ✅ Animación</button>
-          <button class="btn-sm" style="background:#ef4444;color:#fff;" onclick="testAnimacion('rechazar')">Probar ❌ Animación</button>
+          <button class="btn-sm" style="background:#ef4444;color:#fff;" onclick="testAnimacion('rechazar')">Probar ❌ Animación</button>-->
           <button class="btn-sm" style="background:#f59e0b;color:#000;" onclick="testAnimacion('meta')">Probar 🏆 Meta Final</button>
         </div>
       </div>
@@ -71,6 +86,7 @@ const db = loadState();
 
   <script>
     import Swal from 'sweetalert2';
+    import { openEmojiPicker } from '../components/EmojiPicker';
 
     function swalTheme() {
       return document.body.classList.contains('theme-mario') ? 'swal-mario' : 'swal-minecraft';
@@ -104,13 +120,27 @@ const db = loadState();
 
     window.editarTarea = function(nombre, iconoActual, tiempoActual) {
       const escapeStr = s => s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      const timeOptions = [5, 10, 15, 20, 25, 30, 45, 60];
+      const timeSelectHtml = timeOptions.map(v =>
+        `<option value="${v}"${v === tiempoActual ? ' selected' : ''}>${v} min</option>`
+      ).join('');
       Swal.fire({
         title: 'Editar misi\u00f3n',
         html: `
-          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
-            <input id="swal-icono" type="text" maxlength="2" value="${escapeStr(iconoActual)}" placeholder="Icono" style="text-align:center;padding:6px;font-size:14px;width:60px;margin:0 auto;" />
-            <input id="swal-nombre" type="text" value="${escapeStr(nombre)}" placeholder="Nombre" style="padding:6px;font-size:14px;width:100%;box-sizing:border-box;" />
-            <input id="swal-tiempo" type="number" value="${tiempoActual}" min="1" placeholder="Minutos" style="padding:6px;font-size:14px;width:100%;box-sizing:border-box;" />
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+            <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+              <button type="button" class="btn-icon-picker swal-icon-picker" id="swal-btn-icono">
+                <span class="icon-picker-selected">${escapeStr(iconoActual)}</span>
+                <span class="icon-picker-arrow">▼</span>
+              </button>
+              <input id="swal-nombre" type="text" value="${escapeStr(nombre)}" placeholder="Nombre" style="flex:1;padding:6px;font-size:14px;box-sizing:border-box;border:2px solid #555;border-radius:var(--radius-sm);background:var(--color-bg);color:var(--color-text);" />
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:1.2rem;">⏱</span>
+              <select id="swal-tiempo" style="flex:1;padding:6px;font-size:14px;border:2px solid #555;border-radius:var(--radius-sm);background:var(--color-bg);color:var(--color-text);">
+                ${timeSelectHtml}
+              </select>
+            </div>
           </div>
         `,
         showCancelButton: true,
@@ -123,8 +153,18 @@ const db = loadState();
           confirmButton: 'swal-btn-confirm',
           cancelButton: 'swal-btn-cancel',
         },
+        didOpen: () => {
+          const btn = document.getElementById('swal-btn-icono');
+          if (btn) {
+            btn.addEventListener('click', () => {
+              openEmojiPicker(btn, (emoji) => {
+                btn.querySelector('.icon-picker-selected').textContent = emoji;
+              });
+            });
+          }
+        },
         preConfirm: () => {
-          const icono = document.getElementById('swal-icono').value.trim() || '📌';
+          const icono = document.querySelector('#swal-btn-icono .icon-picker-selected')?.textContent || '📌';
           const nuevoNombre = document.getElementById('swal-nombre').value.trim();
           const tiempo = parseInt(document.getElementById('swal-tiempo').value, 10);
           if (!nuevoNombre) {
@@ -150,7 +190,7 @@ const db = loadState();
 
     window.agregarTarea = function() {
       const nombre = document.getElementById('nombre_nuevo').value.trim();
-      const icono = document.getElementById('icono_nuevo').value.trim() || '📌';
+      const icono = document.querySelector('#btn-icono-nuevo .icon-picker-selected').textContent || '📌';
       const tiempo = parseInt(document.getElementById('tiempo_nuevo').value, 10) || 15;
       if (!nombre) return;
       fetch('/api/modificar-tareas', {
@@ -215,6 +255,17 @@ const db = loadState();
         .then(() => { window.location.href = '/'; });
     }
 
+    // Init emoji picker for Agregar form
+    document.addEventListener('DOMContentLoaded', () => {
+      const btnIcono = document.getElementById('btn-icono-nuevo');
+      if (btnIcono) {
+        btnIcono.addEventListener('click', () => {
+          openEmojiPicker(btnIcono, (emoji) => {
+            btnIcono.querySelector('.icon-picker-selected').textContent = emoji;
+          });
+        });
+      }
+    });
   </script>
 
   <style>
@@ -240,7 +291,8 @@ const db = loadState();
       border-radius: var(--radius-sm);
       padding: clamp(6px, 1dvh, 12px) clamp(8px, 1.5dvh, 16px);
       margin-bottom: 0;
-      height: clamp(130px, 5.5dvh, 56px);
+      min-height: clamp(48px, 5.5dvh, 72px);
+      height: auto;
       font-family: var(--font-body);
       font-size: clamp(13px, 1.5dvh, 17px);
       animation: fadeIn 0.3s ease forwards;
@@ -256,19 +308,19 @@ const db = loadState();
     .task-item-name {
       display: flex;
       align-items: center;
-      gap: clamp(19px, 0.6dvh, 10px);
+      gap: clamp(4px, 0.6dvh, 10px);
       font-weight: 600;
       flex-shrink: 0;
     }
 
     .task-item-icon {
-      font-size: clamp(2rem, 1.3dvh, 1.2rem);
+      font-size: clamp(1.1rem, 2dvh, 1.6rem);
     }
 
     .task-item-time {
       font-family: var(--font-display);
       color: var(--color-gold);
-      font-size: clamp(19px, 1.2dvh, 13px);
+      font-size: clamp(11px, 1.5dvh, 15px);
       white-space: nowrap;
     }
 
@@ -289,26 +341,51 @@ const db = loadState();
       gap: clamp(3px, 0.5dvh, 8px);
     }
 
-    .input-icono {
-      width: clamp(40px, 8dvw, 64px);
-      flex-shrink: 0;
-      text-align: center;
-    }
-
-    .input-nombre {
-      flex: 1;
-      min-width: min(140px, 40dvw);
-    }
-
-    .input-tiempo {
-      width: clamp(50px, 10dvw, 80px);
-      flex-shrink: 0;
-      text-align: center;
-    }
-
     .input-nombre {
       flex: 1;
       min-width: 0;
+    }
+
+    .input-tiempo {
+      width: auto;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .time-wrapper {
+      display: flex;
+      align-items: center;
+      gap: clamp(3px, 0.4dvh, 6px);
+      flex-shrink: 0;
+    }
+
+    .time-icon {
+      font-size: clamp(1rem, 1.8dvh, 1.3rem);
+      line-height: 1;
+    }
+
+    .btn-icon-picker {
+      display: inline-flex;
+      align-items: center;
+      gap: clamp(2px, 0.3dvh, 4px);
+      padding: clamp(4px, 0.5dvh, 8px) clamp(6px, 0.8dvh, 10px);
+      font-size: clamp(1.2rem, 2.2dvh, 1.6rem);
+      background: var(--color-bg);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+
+    .btn-icon-picker:hover {
+      border-color: var(--color-gold-dim);
+    }
+
+    .icon-picker-arrow {
+      font-size: clamp(6px, 0.7dvh, 8px);
+      color: var(--color-text-dim);
     }
 
     .btn-sm {
@@ -372,9 +449,139 @@ const db = loadState();
       font-family: var(--font-body);
       font-weight: 600;
     }
+
+    @media (orientation: portrait) and (max-width: 650px) {
+      .task-list {
+        grid-template-columns: 1fr;
+      }
+      .task-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: clamp(4px, 0.8dvh, 10px);
+        height: auto;
+        min-height: unset;
+      }
+      .task-item-actions {
+        justify-content: flex-end;
+      }
+      .form-group {
+        flex-wrap: wrap;
+      }
+      .form-group .input-nombre {
+        min-width: 100%;
+        order: -1;
+      }
+      .form-group .btn-primary {
+        width: 100%;
+      }
+    }
   </style>
 
   <style is:global>
+    /* ===== Emoji Picker ===== */
+    .emoji-picker-popover {
+      position: fixed;
+      z-index: 99999;
+      width: min(340px, 94dvw);
+      max-height: 360px;
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-family: var(--font-body);
+    }
+
+    .emoji-picker-search {
+      width: 100%;
+      padding: clamp(6px, 0.8dvh, 10px) clamp(8px, 1dvh, 12px);
+      border: none;
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-bg);
+      color: var(--color-text);
+      font-size: clamp(13px, 1.5dvh, 15px);
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .emoji-picker-tabs {
+      display: flex;
+      gap: 1px;
+      padding: clamp(3px, 0.4dvh, 6px) clamp(4px, 0.5dvh, 8px);
+      border-bottom: 1px solid var(--color-border);
+      overflow-x: auto;
+      flex-shrink: 0;
+      background: var(--color-bg);
+    }
+
+    .emoji-picker-tab {
+      font-size: clamp(14px, 1.6dvh, 18px);
+      padding: clamp(2px, 0.3dvh, 4px) clamp(4px, 0.5dvh, 6px);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      opacity: 0.5;
+      transition: opacity 0.15s, background 0.15s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .emoji-picker-tab:hover {
+      opacity: 0.8;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .emoji-picker-tab.active {
+      opacity: 1;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .emoji-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 1px;
+      padding: clamp(4px, 0.5dvh, 6px);
+      overflow-y: auto;
+      flex: 1;
+      align-content: start;
+    }
+
+    .emoji-picker-option {
+      font-size: clamp(18px, 2.5dvh, 24px);
+      padding: clamp(2px, 0.3dvh, 4px);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: center;
+      border-radius: var(--radius-sm);
+      line-height: 1.2;
+      transition: background 0.1s;
+    }
+
+    .emoji-picker-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .emoji-picker-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: clamp(12px, 2dvh, 24px);
+      color: var(--color-text-dim);
+      font-size: clamp(12px, 1.4dvh, 14px);
+    }
+
+    body.theme-mario .emoji-picker-popover {
+      border-radius: 12px;
+    }
+
+    body.theme-mario .emoji-picker-tab,
+    body.theme-mario .emoji-picker-option {
+      border-radius: 6px;
+    }
+
     /* ===== SweetAlert2 Minecraft Theme ===== */
     .swal-minecraft {
       background: #2d2d2d !important;

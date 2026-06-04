@@ -83,6 +83,12 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
     }
 
     aplicarTema(savedTheme);
+
+    // Detección de capacidad del dispositivo
+    const esLento = ('hardwareConcurrency' in navigator && navigator.hardwareConcurrency < 4)
+                 || ('deviceMemory' in navigator && navigator.deviceMemory < 4);
+    if (esLento) document.body.classList.add('slow-device');
+
     window.themeListo = true;
 
     window.cambiarTema = function(tema) {

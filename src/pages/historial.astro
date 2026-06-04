@@ -432,6 +432,12 @@ const ultimos30 = Array.from({ length: 30 }, (_, i) => {
       font-family: var(--font-body);
     }
 
+    @media (orientation: portrait) and (max-width: 650px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     .nav-links {
       display: flex;
       justify-content: center;
