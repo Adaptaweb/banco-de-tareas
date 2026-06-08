@@ -48,7 +48,7 @@ export function reloadFromDb() {
   const hoy = new Date().toISOString().slice(0, 10);
 
   // Daily reset check
-  if (hoy !== state.fecha_actual) {
+  if (hoy !== db.fecha) {
     saveDailyHistory(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas);
     state.tareas_aprobadas = [];
     state.tiempo_hoy = 0;
