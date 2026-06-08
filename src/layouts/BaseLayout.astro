@@ -81,12 +81,14 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
       const aMoneda = document.getElementById('audioMoneda');
       const aError = document.getElementById('audioError');
       const aVictory = document.getElementById('audioVictory');
+      const aSobre = document.getElementById('audioSobre');
       if (aClic && soundsMap[tema]) {
         aClic.src = soundsMap[tema].click;
         aMoneda.src = soundsMap[tema].coin;
         aError.src = soundsMap[tema].error;
         aVictory.src = soundsMap[tema].victory;
-        [aClic, aMoneda, aError, aVictory].forEach(a => a.load());
+        if (aSobre) aSobre.src = soundsMap[tema].victory;
+        [aClic, aMoneda, aError, aVictory, aSobre].forEach(a => { if (a) a.load(); });
       }
     }
 

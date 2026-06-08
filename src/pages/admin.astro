@@ -79,6 +79,7 @@ const db = loadState();
           <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
             <button class="btn-sm btn-danger" onclick="limpiarHoy()">Limpiar datos de hoy</button>
             <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
+            <button class="btn-sm" style="background:#8b5cf6;color:#fff;" onclick="testAnimacion('sobre')">Probar 🎁 Sobre Mundial</button>
             <button class="btn-sm" style="background:#f59e0b;color:#000;" onclick="testAnimacion('meta')">Probar 🏆 Meta Final</button>
           </div>
         </div>
@@ -271,6 +272,10 @@ const db = loadState();
     }
 
     window.testAnimacion = function(accion) {
+      if (accion === 'sobre') {
+        window.location.href = '/?test_sobre=1';
+        return;
+      }
       fetch(`/api/test-animacion?accion=${accion}`)
         .then(() => { window.location.href = '/'; });
     }

@@ -48,17 +48,20 @@ const total = tareas.length;
   <audio id="audioMoneda" preload="none"></audio>
   <audio id="audioError" preload="none"></audio>
   <audio id="audioVictory" preload="none"></audio>
+  <audio id="audioSobre" preload="none"></audio>
 
   <script>
     let ultimoEstadoProcesado = 'esperando';
     let finalActivo = false;
+    let sobreAnimando = false;
     const aClic = document.getElementById('audioClic');
     const aMoneda = document.getElementById('audioMoneda');
     const aError = document.getElementById('audioError');
     const aVictory = document.getElementById('audioVictory');
+    const aSobre = document.getElementById('audioSobre');
     window.sonarHover = function() { aClic.currentTime = 0; aClic.play().catch(() => {}); }
     function habilitarAudio() {
-      [aClic, aMoneda, aError, aVictory].forEach(a => {
+      [aClic, aMoneda, aError, aVictory, aSobre].forEach(a => {
         a.muted = true; a.play().then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(() => {});
       });
       document.removeEventListener('click', habilitarAudio);
@@ -98,6 +101,88 @@ const total = tareas.length;
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 1200);
       }
+    }
+    function mostrarSobreMundial(despues) {
+      if (sobreAnimando) return;
+      sobreAnimando = true;
+      detenerPoll();
+
+      const sobre = document.createElement('div');
+      sobre.id = 'sobre-overlay';
+      sobre.innerHTML = '<div id="sobre-bg"></div>'
+        + '<div id="sobre-brillo"></div>'
+        + '<div id="sobre-contenedor">'
+        + '<div id="sobre-imagen"></div>'
+        + '</div>'
+        + '<div id="sobre-mensaje"><h2>⚽ ¡MISIÓN CUMPLIDA! ⚽</h2><p>Has ganado un sobre del Mundial</p></div>'
+        + '<div id="sobre-tap-texto">Toca la pantalla para guardar tu sobre</div>'
+        + '<div id="sobre-coleccion"></div>'
+        + '<div id="sobre-guardado">🎉 ¡Guardado!</div>';
+      document.body.appendChild(sobre);
+
+      const contenedor = document.getElementById('sobre-contenedor');
+      const brillo = document.getElementById('sobre-brillo');
+      const imagen = document.getElementById('sobre-imagen');
+      const mensaje = document.getElementById('sobre-mensaje');
+      const tapTexto = document.getElementById('sobre-tap-texto');
+      const coleccion = document.getElementById('sobre-coleccion');
+      const guardado = document.getElementById('sobre-guardado');
+      let animandoGuardar = false;
+
+      void sobre.offsetWidth;
+      sobre.classList.add('active');
+
+      setTimeout(() => {
+        contenedor.classList.add('entrada');
+        aVictory.currentTime = 0; aVictory.play().catch(() => {});
+      }, 100);
+
+      setTimeout(() => {
+        mensaje.classList.add('show');
+        tapTexto.classList.add('show');
+      }, 900);
+
+      function guardarSobre() {
+        if (animandoGuardar) return;
+        animandoGuardar = true;
+        tapTexto.classList.remove('show');
+        mensaje.classList.remove('show');
+        contenedor.classList.add('guardar');
+        brillo.classList.add('expand');
+
+        for (let i = 0; i < 20; i++) {
+          const p = document.createElement('div');
+          p.className = 'sobre-coleccion-particula';
+          const size = 4 + Math.random() * 8;
+          const colors = ['#ffd700','#ff6b6b','#51cf66','#339af0','#fcc419','#fff'];
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const angle = (i / 20) * Math.PI * 2 + (Math.random() - 0.5) * 0.8;
+          const dist = 60 + Math.random() * 120;
+          const dx = Math.cos(angle) * dist;
+          const dy = Math.sin(angle) * dist - 80;
+          p.style.cssText = `--dx:${dx}px;--dy:${dy}px;--rot:${Math.random()*360}deg;width:${size}px;height:${size}px;background:${color};border-radius:50%;left:50%;top:50%;`;
+          coleccion.appendChild(p);
+          setTimeout(() => p.remove(), 1200);
+        }
+
+        setTimeout(() => {
+          guardado.classList.add('show');
+          setTimeout(() => {
+            sobre.classList.remove('active');
+            setTimeout(() => {
+              sobre.remove();
+              sobreAnimando = false;
+              if (despues) despues();
+            }, 400);
+          }, 800);
+        }, 600);
+      }
+
+      sobre.addEventListener('click', function(e) {
+        if (!animandoGuardar && (e.target === sobre || e.target.id === 'sobre-bg' || e.target.closest('#sobre-contenedor') || e.target.id === 'sobre-tap-texto' || e.target.id === 'sobre-mensaje')) {
+          guardarSobre();
+        }
+      });
     }
     function actualizarReloj() {
       const ahora = new Date();
@@ -171,46 +256,55 @@ const total = tareas.length;
     function pollEstadoEsperando() {
       fetch('/api/estado').then(res => res.json()).then(data => {
         actualizarUI(data);
-        if (data.total_tareas > 0 && data.aprobadas.length === data.total_tareas) {
-          detenerPoll();
-          if (!finalActivo) {
-            finalActivo = true; aVictory.play();
-            document.body.classList.add('victory-mode');
-            const horaFin = new Date().toLocaleTimeString('es-CL');
-            const listaTareas = data.aprobadas.map(t => '<span class="victory-task-item">' + t + '</span>').join('');
-            document.getElementById('contenido').innerHTML = "<div class='status victory-card' style='width:100%;'>"
-              + "<h2>🏆 META FINAL!</h2>"
-              + "<p class='victory-count'>" + data.total_tareas + "/" + data.total_tareas + " MISIONES LOGRADAS</p>"
-              + "<div class='victory-stats'>"
-              + "<span>⏱ " + data.tiempo_formato + "</span>"
-              + "<span>🕐 " + horaFin + "</span>"
-              + "</div>"
-              + "<div class='victory-tasks'>" + listaTareas + "</div>"
-              + "</div>";
-            setInterval(spawnConfetti, 300);
-            setInterval(spawnFirework, 1500);
-          }
-          return;
-        }
         data.aprobadas.forEach(tarea => {
           const btn = document.querySelector('[data-nombre="' + tarea + '"]');
           if (btn && !btn.disabled) btn.disabled = true;
         });
-        if (data.valor === 'aprobada' && ultimoEstadoProcesado !== 'aprobada') {
-          detenerPoll();
-          ultimoEstadoProcesado = 'aprobada'; aMoneda.play();
-          document.body.classList.remove('fail-mode');
-          document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-emerald);border-radius:var(--radius);background:var(--color-surface);width:100%;'><p style='color:var(--color-emerald);font-size:1.3rem;font-weight:700;font-family:var(--font-display);'>LEVEL UP!</p><p style='color:var(--color-text);margin-top:8px;'>Misión cumplida</p></div><button onclick='volverAlMenu()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🔄</span> VOLVER</button></div>";
-        } else if (data.valor === 'rechazada' && ultimoEstadoProcesado !== 'rechazada') {
-          detenerPoll();
-          ultimoEstadoProcesado = 'rechazada'; aError.play();
-          document.body.classList.add('fail-mode');
-          document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-rose);border-radius:var(--radius);background:rgba(244,63,94,0.1);width:100%;'><p style='color:var(--color-rose);font-size:1.1rem;font-family:var(--font-display);'>RECHAZADO</p></div><button onclick='reintentarTarea()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🏹</span> REINTENTAR</button></div>";
-        }
+        procesarEstado(data);
       }).catch(() => {});
     }
+    function procesarEstado(data) {
+      if (data.valor === 'aprobada' && ultimoEstadoProcesado !== 'aprobada') {
+        detenerPoll();
+        ultimoEstadoProcesado = 'aprobada';
+        document.body.classList.remove('fail-mode');
+        mostrarSobreMundial(function() {
+          if (data.total_tareas > 0 && data.aprobadas.length === data.total_tareas) {
+            if (!finalActivo) {
+              finalActivo = true;
+              document.body.classList.add('victory-mode');
+              const horaFin = new Date().toLocaleTimeString('es-CL');
+              const listaTareas = data.aprobadas.map(t => '<span class="victory-task-item">' + t + '</span>').join('');
+              document.getElementById('contenido').innerHTML = "<div class='status victory-card' style='width:100%;'>"
+                + "<h2>🏆 META FINAL!</h2>"
+                + "<p class='victory-count'>" + data.total_tareas + "/" + data.total_tareas + " MISIONES LOGRADAS</p>"
+                + "<div class='victory-stats'>"
+                + "<span>⏱ " + data.tiempo_formato + "</span>"
+                + "<span>🕐 " + horaFin + "</span>"
+                + "</div>"
+                + "<div class='victory-tasks'>" + listaTareas + "</div>"
+                + "</div>";
+              setInterval(spawnConfetti, 300);
+              setInterval(spawnFirework, 1500);
+            }
+          } else {
+            document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-emerald);border-radius:var(--radius);background:var(--color-surface);width:100%;'><p style='color:var(--color-emerald);font-size:1.3rem;font-weight:700;font-family:var(--font-display);'>LEVEL UP!</p><p style='color:var(--color-text);margin-top:8px;'>Misión cumplida</p></div><button onclick='volverAlMenu()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🔄</span> VOLVER</button></div>";
+          }
+        });
+      } else if (data.valor === 'rechazada' && ultimoEstadoProcesado !== 'rechazada') {
+        detenerPoll();
+        ultimoEstadoProcesado = 'rechazada'; aError.play();
+        document.body.classList.add('fail-mode');
+        document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-rose);border-radius:var(--radius);background:rgba(244,63,94,0.1);width:100%;'><p style='color:var(--color-rose);font-size:1.1rem;font-family:var(--font-display);'>RECHAZADO</p></div><button onclick='reintentarTarea()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🏹</span> REINTENTAR</button></div>";
+      }
+    }
     (function esperarTema() {
-      if (window.themeListo) cargarEstadoInicial();
+      if (window.themeListo) {
+        cargarEstadoInicial();
+        if (new URLSearchParams(location.search).has('test_sobre')) {
+          setTimeout(function() { mostrarSobreMundial(); }, 1200);
+        }
+      }
       else setTimeout(esperarTema, 30);
     })();
     let timeoutInactivity, slideshowInterval;
@@ -495,6 +589,160 @@ const total = tareas.length;
     @keyframes victory-glow {
       0%, 100% { box-shadow: 0 0 20px rgba(251,191,36,0.3); }
       50% { box-shadow: 0 0 60px rgba(251,191,36,0.6), 0 0 120px rgba(251,191,36,0.2); }
+    }
+
+    /* ===== Sobre Mundial Overlay ===== */
+    #sobre-overlay {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+    #sobre-overlay.active {
+      opacity: 1; pointer-events: all;
+    }
+    #sobre-bg {
+      position: absolute; inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    #sobre-brillo {
+      position: absolute;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,215,0,0.9) 0%, rgba(255,215,0,0.3) 30%, transparent 70%);
+      transform: scale(0); opacity: 0;
+      transition: none;
+      pointer-events: none;
+      z-index: 1;
+    }
+    #sobre-brillo.expand {
+      animation: brillo-expand 0.8s ease-out forwards;
+    }
+    @keyframes brillo-expand {
+      0% { transform: scale(0); opacity: 0; }
+      20% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(10); opacity: 0; }
+    }
+    #sobre-contenedor {
+      position: relative;
+      z-index: 2;
+      width: 280px; height: 380px;
+      opacity: 0; transform: translateY(-60px) scale(0.6);
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+      cursor: pointer;
+    }
+    #sobre-contenedor.entrada {
+      animation: sobre-entrada 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @keyframes sobre-entrada {
+      0% { opacity: 0; transform: translateY(-60px) scale(0.6); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    #sobre-contenedor.guardar {
+      transform: translateY(80px) scale(0.2);
+      opacity: 0;
+    }
+    #sobre-imagen {
+      width: 100%; height: 100%;
+      border-radius: 12px;
+      background-image: url('/images/sobre-mundial.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-shadow: 0 0 40px rgba(255,215,0,0.3), 0 8px 32px rgba(0,0,0,0.5);
+      animation: sobre-pulso 3s ease-in-out infinite;
+    }
+    @keyframes sobre-pulso {
+      0%, 100% { box-shadow: 0 0 40px rgba(255,215,0,0.3), 0 8px 32px rgba(0,0,0,0.5); }
+      50% { box-shadow: 0 0 60px rgba(255,215,0,0.6), 0 0 100px rgba(255,215,0,0.2), 0 8px 32px rgba(0,0,0,0.5); }
+    }
+    #sobre-mensaje {
+      position: absolute;
+      z-index: 3;
+      text-align: center;
+      top: 12%;
+      opacity: 0; transform: scale(0.5);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    #sobre-mensaje.show {
+      opacity: 1; transform: scale(1);
+    }
+    #sobre-mensaje h2 {
+      font-family: var(--font-display);
+      font-size: clamp(1.3rem, 3dvh, 1.8rem);
+      color: #ffd700;
+      text-shadow: 0 0 30px rgba(255,215,0,0.6), 0 2px 10px rgba(0,0,0,0.8);
+      margin-bottom: 6px;
+      animation: mensaje-brillo 1.5s ease-in-out infinite;
+    }
+    @keyframes mensaje-brillo {
+      0%, 100% { text-shadow: 0 0 20px rgba(255,215,0,0.4), 0 2px 10px rgba(0,0,0,0.8); }
+      50% { text-shadow: 0 0 40px rgba(255,215,0,0.8), 0 0 80px rgba(255,215,0,0.3), 0 2px 10px rgba(0,0,0,0.8); }
+    }
+    #sobre-mensaje p {
+      font-family: var(--font-body);
+      font-size: clamp(0.9rem, 1.8dvh, 1.1rem);
+      color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      font-weight: 600;
+    }
+    #sobre-tap-texto {
+      position: absolute;
+      z-index: 3;
+      bottom: 15%;
+      text-align: center;
+      font-family: var(--font-body);
+      font-size: clamp(0.75rem, 1.6dvh, 0.95rem);
+      color: rgba(255,255,255,0.7);
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      pointer-events: none;
+      letter-spacing: 1px;
+      animation: tap-parpadeo 2s ease-in-out infinite;
+    }
+    #sobre-tap-texto.show {
+      opacity: 1;
+    }
+    @keyframes tap-parpadeo {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    #sobre-coleccion {
+      position: absolute; inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      overflow: visible;
+    }
+    .sobre-coleccion-particula {
+      position: absolute;
+      margin-left: -3px; margin-top: -3px;
+      animation: coleccion-vuelo 1s ease-out forwards;
+    }
+    @keyframes coleccion-vuelo {
+      0% { transform: translate(0,0) rotate(0deg) scale(1); opacity: 1; }
+      100% { transform: translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(0); opacity: 0; }
+    }
+    #sobre-guardado {
+      position: absolute;
+      z-index: 5;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: clamp(1.5rem, 4dvh, 2.2rem);
+      color: #ffd700;
+      text-shadow: 0 0 40px rgba(255,215,0,0.8), 0 2px 10px rgba(0,0,0,0.8);
+      opacity: 0; transform: scale(0.3);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    #sobre-guardado.show {
+      opacity: 1; transform: scale(1);
+    }
+    @media (max-width: 480px) {
+      #sobre-contenedor { width: 200px; height: 280px; }
     }
   </style>
 </BaseLayout>
