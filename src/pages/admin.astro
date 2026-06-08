@@ -434,7 +434,7 @@ const db = loadState();
       border-radius: var(--radius-sm);
       padding: clamp(6px, 1dvh, 12px) clamp(8px, 1.5dvh, 16px);
       margin-bottom: 0;
-      min-height: clamp(48px, 5.5dvh, 72px);
+      min-height: auto;
       height: auto;
       font-family: var(--font-body);
       font-size: clamp(13px, 1.5dvh, 17px);
@@ -604,7 +604,7 @@ const db = loadState();
         align-items: stretch;
         gap: clamp(4px, 0.8dvh, 10px);
         height: auto;
-        min-height: unset;
+        min-height: auto;
       }
       .task-item-actions {
         justify-content: flex-end;
