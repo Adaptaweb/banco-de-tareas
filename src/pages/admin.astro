@@ -64,36 +64,40 @@ const db = loadState();
         <button class="btn-sm btn-primary" onclick="agregarTarea()">Agregar</button>
       </div>
 
-      <div class="nav-links">
-        <a href="/historial">Ver Historial Diario</a>
-        <a href="/admin/slideshow">Gestionar Slideshow</a>
-        <a href="/">Volver a la vista de Matías</a>
-      </div>
+      <button id="btn-config-toggle" class="config-toggle" onclick="toggleConfig()">⚙️ Más configuración</button>
 
-      <div class="test-only">
+      <div id="extra-config">
+        <div class="nav-links">
+          <a href="/historial">Ver Historial Diario</a>
+          <a href="/admin/slideshow">Gestionar Slideshow</a>
+          <a href="/">Volver a la vista de Matías</a>
+        </div>
+
+        <div class="test-only">
+          <div class="divider"></div>
+          <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">Testing</h2>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn-sm btn-danger" onclick="limpiarHoy()">Limpiar datos de hoy</button>
+            <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
+            <button class="btn-sm" style="background:#f59e0b;color:#000;" onclick="testAnimacion('meta')">Probar 🏆 Meta Final</button>
+          </div>
+        </div>
+
         <div class="divider"></div>
-        <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">Testing</h2>
-        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-          <button class="btn-sm btn-danger" onclick="limpiarHoy()">Limpiar datos de hoy</button>
-          <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
-          <button class="btn-sm" style="background:#f59e0b;color:#000;" onclick="testAnimacion('meta')">Probar 🏆 Meta Final</button>
+
+        <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">
+          Configuración Home&nbsp;Assistant
+          <span id="ha-active-display"></span>
+        </h2>
+
+        <div id="ha-config-section">
+          <div class="ha-add-row">
+            <input type="text" id="ha-ip-input" placeholder="Ej: 192.168.1.100" class="input-nombre" />
+            <button class="btn-sm btn-primary" onclick="haAgregarIp()">Agregar IP</button>
+          </div>
+          <div id="ha-ip-select-area" class="ha-select-area"></div>
+          <div id="ha-status" class="ha-status"></div>
         </div>
-      </div>
-
-      <div class="divider"></div>
-
-      <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">
-        Configuración Home&nbsp;Assistant
-        <span id="ha-active-display"></span>
-      </h2>
-
-      <div id="ha-config-section">
-        <div class="ha-add-row">
-          <input type="text" id="ha-ip-input" placeholder="Ej: 192.168.1.100" class="input-nombre" />
-          <button class="btn-sm btn-primary" onclick="haAgregarIp()">Agregar IP</button>
-        </div>
-        <div id="ha-ip-select-area" class="ha-select-area"></div>
-        <div id="ha-status" class="ha-status"></div>
       </div>
     </div>
   </div>
@@ -397,6 +401,15 @@ const db = loadState();
       });
     }
 
+    window.toggleConfig = function() {
+      const card = document.querySelector('.card');
+      card.classList.toggle('show-config');
+      const btn = document.getElementById('btn-config-toggle');
+      btn.textContent = card.classList.contains('show-config')
+        ? '▲ Ocultar configuración'
+        : '⚙️ Más configuración';
+    }
+
     // Init emoji picker for Agregar form
     document.addEventListener('DOMContentLoaded', () => {
       const btnIcono = document.getElementById('btn-icono-nuevo');
@@ -595,10 +608,60 @@ const db = loadState();
       font-weight: 600;
     }
 
+    .config-toggle {
+      display: none;
+      width: 100%;
+      padding: clamp(8px, 1dvh, 14px);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: clamp(13px, 1.5dvh, 17px);
+      background: var(--color-bg);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      color: var(--color-text-dim);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      margin-top: clamp(6px, 0.8dvh, 10px);
+    }
+
+    .config-toggle:hover {
+      border-color: var(--color-gold-dim);
+      color: var(--color-text);
+    }
+
     @media (orientation: portrait) and (max-width: 650px) {
-      .task-list {
+      .card {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .card .task-list {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
         grid-template-columns: 1fr;
       }
+
+      .card.show-config {
+        height: auto;
+        overflow: visible;
+      }
+
+      #extra-config {
+        display: none;
+      }
+
+      .card.show-config #extra-config {
+        display: block;
+      }
+
+      .config-toggle {
+        display: block;
+      }
+
       .task-item {
         flex-direction: column;
         align-items: stretch;
