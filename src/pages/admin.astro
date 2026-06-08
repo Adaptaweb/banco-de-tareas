@@ -609,7 +609,6 @@ const db = loadState();
     }
 
     .config-toggle {
-      display: none;
       width: 100%;
       padding: clamp(8px, 1dvh, 14px);
       font-family: var(--font-body);
@@ -630,42 +629,47 @@ const db = loadState();
       color: var(--color-text);
     }
 
+    .card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .card .task-list {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    .card.show-config {
+      overflow: visible;
+    }
+
+    .card.show-config .task-list {
+      flex: none;
+    }
+
+    #extra-config {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+      margin-top: 0;
+    }
+
+    .card.show-config #extra-config {
+      max-height: 2000px;
+      opacity: 1;
+      margin-top: clamp(8px, 1.2dvh, 20px);
+    }
+
     @media (orientation: portrait) and (max-width: 650px) {
       .card {
         height: 100dvh;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
       }
 
       .card .task-list {
-        flex: 1;
-        overflow-y: auto;
-        min-height: 0;
         grid-template-columns: 1fr;
-      }
-
-      .card.show-config {
-        height: auto;
-        overflow: visible;
-      }
-
-      #extra-config {
-        overflow: hidden;
-        max-height: 0;
-        opacity: 0;
-        transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
-        margin-top: 0;
-      }
-
-      .card.show-config #extra-config {
-        max-height: 2000px;
-        opacity: 1;
-        margin-top: clamp(8px, 1.2dvh, 20px);
-      }
-
-      .config-toggle {
-        display: block;
       }
 
       .task-item {
