@@ -453,7 +453,9 @@ const db = loadState();
       align-items: center;
       gap: clamp(4px, 0.6dvh, 10px);
       font-weight: 600;
-      flex-shrink: 0;
+      flex-shrink: 1;
+      min-width: 0;
+      word-break: break-word;
     }
 
     .task-item-icon {
