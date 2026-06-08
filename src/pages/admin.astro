@@ -651,11 +651,17 @@ const db = loadState();
       }
 
       #extra-config {
-        display: none;
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+        margin-top: 0;
       }
 
       .card.show-config #extra-config {
-        display: block;
+        max-height: 2000px;
+        opacity: 1;
+        margin-top: clamp(8px, 1.2dvh, 20px);
       }
 
       .config-toggle {
