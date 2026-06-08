@@ -75,11 +75,24 @@ const db = loadState();
         <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">Testing</h2>
         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
           <button class="btn-sm btn-danger" onclick="limpiarHoy()">Limpiar datos de hoy</button>
-         <!-- <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
-          <button class="btn-sm" style="background:#22c55e;color:#fff;" onclick="testAnimacion('aprobar')">Probar ✅ Animación</button>
-          <button class="btn-sm" style="background:#ef4444;color:#fff;" onclick="testAnimacion('rechazar')">Probar ❌ Animación</button>-->
+          <button class="btn-sm" style="background:#7c3aed;color:#fff;" onclick="testHa()">Probar Webhook HA</button>
           <button class="btn-sm" style="background:#f59e0b;color:#000;" onclick="testAnimacion('meta')">Probar 🏆 Meta Final</button>
         </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h2 class="text-center" style="font-size:clamp(14px,1.6dvh,18px);margin-bottom:clamp(8px,1.2dvh,16px);">
+        Configuración Home Assistant
+      </h2>
+
+      <div id="ha-config-section">
+        <div class="ha-add-row">
+          <input type="text" id="ha-ip-input" placeholder="Ej: 192.168.1.100" class="input-nombre" />
+          <button class="btn-sm btn-primary" onclick="haAgregarIp()">Agregar IP</button>
+        </div>
+        <div id="ha-ip-list" class="ha-ip-list"></div>
+        <div id="ha-status" class="ha-status"></div>
       </div>
     </div>
   </div>
@@ -255,6 +268,125 @@ const db = loadState();
         .then(() => { window.location.href = '/'; });
     }
 
+    // ===== Home Assistant IP management =====
+
+    function haRenderList(list, active) {
+      const container = document.getElementById('ha-ip-list');
+      if (!list || list.length === 0) {
+        container.innerHTML = '<p class="text-muted" style="text-align:center;">No hay IPs configuradas</p>';
+        return;
+      }
+      container.innerHTML = list.map(ip => {
+        const isActive = ip === active;
+        return `
+          <div class="ha-ip-item${isActive ? ' ha-ip-active' : ''}">
+            <span class="ha-ip-addr">${ip}</span>
+            ${isActive ? '<span class="ha-ip-badge">Activa</span>' : ''}
+            <div class="ha-ip-actions">
+              ${!isActive ? `<button class="btn-sm btn-edit" onclick="haActivarIp('${ip}')">Seleccionar</button>` : ''}
+              <button class="btn-sm btn-danger" onclick="haEliminarIp('${ip}')">Eliminar</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function haMostrarStatus(texto, ok) {
+      const el = document.getElementById('ha-status');
+      el.textContent = texto;
+      el.style.color = ok ? 'var(--color-emerald)' : 'var(--color-rose)';
+      el.style.opacity = '1';
+      setTimeout(() => { el.style.opacity = '0'; }, 3000);
+    }
+
+    function haCargar() {
+      fetch('/api/ha-config')
+        .then(r => r.json())
+        .then(data => {
+          haRenderList(data.list, data.active);
+        })
+        .catch(() => {});
+    }
+
+    window.haAgregarIp = function() {
+      const input = document.getElementById('ha-ip-input');
+      const ip = input.value.trim();
+      if (!ip) return;
+      if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(ip)) {
+        haMostrarStatus('Formato de IP inválido', false);
+        return;
+      }
+      fetch('/api/ha-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'agregar', ip }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            input.value = '';
+            haRenderList(data.list, data.active);
+            haMostrarStatus('IP agregada correctamente', true);
+          } else {
+            haMostrarStatus(data.error || 'Error al agregar IP', false);
+          }
+        })
+        .catch(() => haMostrarStatus('Error de conexión', false));
+    }
+
+    window.haActivarIp = function(ip) {
+      fetch('/api/ha-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accion: 'activar', ip }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok) {
+            haRenderList(data.list, data.active);
+            haMostrarStatus(`IP activa cambiada a ${ip}`, true);
+          } else {
+            haMostrarStatus(data.error || 'Error al activar IP', false);
+          }
+        })
+        .catch(() => haMostrarStatus('Error de conexión', false));
+    }
+
+    window.haEliminarIp = function(ip) {
+      Swal.fire({
+        title: 'Eliminar IP',
+        text: `\u00bfEliminar "${ip}" de la lista?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Eliminar',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true,
+        buttonsStyling: false,
+        customClass: {
+          popup: swalTheme(),
+          confirmButton: 'swal-btn-confirm',
+          cancelButton: 'swal-btn-cancel',
+        },
+      }).then(r => {
+        if (!r.isConfirmed) return;
+        fetch('/api/ha-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accion: 'eliminar', ip }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (data.ok) {
+              haRenderList(data.list, data.active);
+              haMostrarStatus('IP eliminada', true);
+            } else {
+              haMostrarStatus(data.error || 'Error al eliminar IP', false);
+            }
+          })
+          .catch(() => haMostrarStatus('Error de conexión', false));
+      });
+    }
+
     // Init emoji picker for Agregar form
     document.addEventListener('DOMContentLoaded', () => {
       const btnIcono = document.getElementById('btn-icono-nuevo');
@@ -265,6 +397,7 @@ const db = loadState();
           });
         });
       }
+      haCargar();
     });
   </script>
 
@@ -478,6 +611,70 @@ const db = loadState();
   </style>
 
   <style is:global>
+    /* ===== HA Config ===== */
+    .ha-add-row {
+      display: flex;
+      gap: clamp(4px, 0.5dvh, 8px);
+      margin-bottom: clamp(8px, 1dvh, 12px);
+    }
+
+    .ha-ip-list {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(4px, 0.5dvh, 8px);
+    }
+
+    .ha-ip-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: clamp(6px, 0.8dvh, 12px);
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      padding: clamp(6px, 0.8dvh, 10px) clamp(8px, 1dvh, 14px);
+      font-family: var(--font-body);
+      font-size: clamp(13px, 1.5dvh, 16px);
+      flex-wrap: wrap;
+    }
+
+    .ha-ip-active {
+      border-color: var(--color-emerald);
+      background: rgba(0, 170, 0, 0.08);
+    }
+
+    .ha-ip-addr {
+      font-family: var(--font-display);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .ha-ip-badge {
+      font-size: clamp(10px, 1.2dvh, 12px);
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--color-emerald);
+      color: #fff;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .ha-ip-actions {
+      display: flex;
+      gap: clamp(4px, 0.5dvh, 8px);
+      flex-shrink: 0;
+    }
+
+    .ha-status {
+      text-align: center;
+      font-size: clamp(12px, 1.4dvh, 14px);
+      font-family: var(--font-body);
+      font-weight: 600;
+      margin-top: clamp(6px, 0.8dvh, 10px);
+      transition: opacity 0.3s;
+      opacity: 0;
+    }
+
     /* ===== Emoji Picker ===== */
     .emoji-picker-popover {
       position: fixed;

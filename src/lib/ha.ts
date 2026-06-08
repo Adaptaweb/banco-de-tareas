@@ -1,9 +1,13 @@
-const HA_IP = process.env.HA_IP || '192.168.3.99';
-const BASE_URL = `http://${HA_IP}:8123`;
+import { getConfig } from './db';
+
+function getHaBaseUrl(): string {
+  const ip = getConfig('ha_ip_active') || process.env.HA_IP || '192.168.3.99';
+  return `http://${ip}:8123`;
+}
 
 export async function notifyMissionApproved(tarea: string, minutos: number) {
   try {
-    await fetch(`${BASE_URL}/api/webhook/mision_aprobada_matias`, {
+    await fetch(`${getHaBaseUrl()}/api/webhook/mision_aprobada_matias`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tarea, minutos }),
@@ -16,7 +20,7 @@ export async function notifyMissionApproved(tarea: string, minutos: number) {
 
 export async function notifyMetaAlcanzada() {
   try {
-    await fetch(`${BASE_URL}/api/webhook/meta_alcanzada_matias`, {
+    await fetch(`${getHaBaseUrl()}/api/webhook/meta_alcanzada_matias`, {
       method: 'POST',
       signal: AbortSignal.timeout(2000),
     });

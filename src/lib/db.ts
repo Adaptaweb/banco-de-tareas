@@ -37,9 +37,14 @@ function initTables() {
       tiempo_ganado INTEGER,
       tareas_completadas TEXT
     );
+    CREATE TABLE IF NOT EXISTS config (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    );
   `);
   migrateEstadoMisionColumn();
   initSlideshowTable();
+  seedHaConfig();
 }
 
 function migrateEstadoMisionColumn() {
@@ -139,6 +144,26 @@ export function updateTask(nombre: string, nuevoNombre: string, icono: string, t
 
 export function removeTask(nombre: string) {
   getDb().prepare('DELETE FROM tareas_activas WHERE nombre = ?').run(nombre);
+}
+
+function seedHaConfig() {
+  const d = getDb();
+  const existing = d.prepare('SELECT value FROM config WHERE key = ?').get('ha_ip_list') as { value: string } | undefined;
+  if (existing) return;
+
+  const envIp = process.env.HA_IP || '192.168.3.99';
+  const list = JSON.stringify([envIp]);
+  d.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)').run('ha_ip_list', list);
+  d.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)').run('ha_ip_active', envIp);
+}
+
+export function getConfig(key: string, defaultVal?: string): string | null {
+  const row = getDb().prepare('SELECT value FROM config WHERE key = ?').get(key) as { value: string } | undefined;
+  return row ? row.value : defaultVal ?? null;
+}
+
+export function setConfig(key: string, value: string) {
+  getDb().prepare('INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)').run(key, value);
 }
 
 export function saveDailyHistory(fecha: string, tiempo_hoy: number, tareas_aprobadas: string[]) {

@@ -1,10 +1,13 @@
 import 'dotenv/config';
 import { Telegraf } from 'telegraf';
-import { loadState, saveState, saveDailyHistory } from './db.js';
+import { loadState, saveState, saveDailyHistory, getConfig } from './db.js';
 
 const TOKEN = process.env.TELEGRAM_TOKEN || '';
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
-const HA_IP = process.env.HA_IP || '192.168.3.99';
+
+function getHaIp(): string {
+  return getConfig('ha_ip_active') || process.env.HA_IP || '192.168.3.99';
+}
 
 export function formatoTiempo(minutos: number): string {
   if (minutos < 60) return `${minutos} Minutos`;
@@ -105,8 +108,9 @@ export function startBot() {
         saveDailyHistory(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas);
 
         // Home Assistant webhook
+        const haIp = getHaIp();
         try {
-          await fetch(`http://${HA_IP}:8123/api/webhook/mision_aprobada_matias`, {
+          await fetch(`http://${haIp}:8123/api/webhook/mision_aprobada_matias`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tarea: tareaNombre, minutos: minutosGanados }),
@@ -114,7 +118,7 @@ export function startBot() {
           });
 
           if (state.tareas_aprobadas.length === numTasks && numTasks > 0) {
-            await fetch(`http://${HA_IP}:8123/api/webhook/meta_alcanzada_matias`, {
+            await fetch(`http://${haIp}:8123/api/webhook/meta_alcanzada_matias`, {
               method: 'POST',
               signal: AbortSignal.timeout(2000),
             });

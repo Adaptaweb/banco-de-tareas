@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
-
-const HA_IP = process.env.HA_IP || '192.168.3.99';
-const BASE_URL = `http://${HA_IP}:8123`;
+import { getConfig } from '../../lib/db';
 
 export const GET: APIRoute = async () => {
+  const haIp = getConfig('ha_ip_active') || process.env.HA_IP || '192.168.3.99';
+  const BASE_URL = `http://${haIp}:8123`;
+
   const results: Record<string, string> = {};
 
   for (const [name, url, body] of [
