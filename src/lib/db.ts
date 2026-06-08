@@ -11,9 +11,9 @@ export function getDb(): Database.Database {
   if (!db) {
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
-  initTables();
-  migrateLegacyJson();
-  seedDefaults();
+    initTables();
+    migrateLegacyJson();
+    seedDefaults();
   }
   return db;
 }
@@ -150,14 +150,13 @@ export function removeTask(nombre: string) {
 }
 
 function seedHaConfig() {
-  const d = getDb();
-  const existing = d.prepare('SELECT value FROM config WHERE key = ?').get('ha_ip_list') as { value: string } | undefined;
+  const existing = db.prepare('SELECT value FROM config WHERE key = ?').get('ha_ip_list') as { value: string } | undefined;
   if (existing) return;
 
   const envIp = process.env.HA_IP || '192.168.3.99';
   const list = JSON.stringify([envIp]);
-  d.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)').run('ha_ip_list', list);
-  d.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)').run('ha_ip_active', envIp);
+  db.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)').run('ha_ip_list', list);
+  db.prepare('INSERT OR IGNORE INTO config (key, value) VALUES (?, ?)').run('ha_ip_active', envIp);
 }
 
 export function getConfig(key: string, defaultVal?: string): string | null {
