@@ -47,7 +47,6 @@ export function reloadFromDb() {
   const db = loadState();
   const hoy = new Date().toISOString().slice(0, 10);
 
-  console.log('[reloadFromDb] db.fecha:', db.fecha, 'db.estado_mision:', db.estado_mision, 'db.tiempo:', db.tiempo_hoy, 'db.aprobadas:', JSON.stringify(db.tareas_aprobadas), 'hoy:', hoy, 'reset?', hoy !== db.fecha);
   // Daily reset check
   if (hoy !== db.fecha) {
     saveDailyHistory(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas);
@@ -95,7 +94,6 @@ export function startBot() {
         state.fecha_actual = hoy;
       }
 
-      console.log('[BOT ok|] tareas_aprobadas:', JSON.stringify(state.tareas_aprobadas), 'incluye?', state.tareas_aprobadas.includes(tareaNombre), 'tarea:', tareaNombre, 'estado_mision:', state.estado_mision, 'fecha_actual:', state.fecha_actual, 'hoy:', hoy);
       if (!state.tareas_aprobadas.includes(tareaNombre)) {
         state.tareas_aprobadas.push(tareaNombre);
 

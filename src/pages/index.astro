@@ -158,6 +158,11 @@ const total = tareas.length;
     window.volverAlMenu = function() {
       if (pollTimer) clearInterval(pollTimer);
       pollTimer = null;
+      location.reload();
+    }
+    window.reintentarTarea = function() {
+      if (pollTimer) clearInterval(pollTimer);
+      pollTimer = null;
       fetch('/api/estado-reset').then(() => { location.reload(); });
     }
     function detenerPoll() {
@@ -200,7 +205,7 @@ const total = tareas.length;
           detenerPoll();
           ultimoEstadoProcesado = 'rechazada'; aError.play();
           document.body.classList.add('fail-mode');
-          document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-rose);border-radius:var(--radius);background:rgba(244,63,94,0.1);width:100%;'><p style='color:var(--color-rose);font-size:1.1rem;font-family:var(--font-display);'>RECHAZADO</p></div><button onclick='volverAlMenu()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🏹</span> REINTENTAR</button></div>";
+          document.getElementById('contenido').innerHTML = "<div style='display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;height:100%;grid-column:1/-1;'><div class='status' style='padding:24px;text-align:center;border:2px solid var(--color-rose);border-radius:var(--radius);background:rgba(244,63,94,0.1);width:100%;'><p style='color:var(--color-rose);font-size:1.1rem;font-family:var(--font-display);'>RECHAZADO</p></div><button onclick='reintentarTarea()' class='btn' style='width:auto;min-width:200px;'><span class='btn-icon'>🏹</span> REINTENTAR</button></div>";
         }
       }).catch(() => {});
     }

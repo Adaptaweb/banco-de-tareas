@@ -123,8 +123,6 @@ export function saveState(
   estado_mision: string = 'esperando'
 ) {
   const d = getDb();
-  const saveStateStack = new Error().stack?.split('\n').slice(2, 5).join(' → ') || '';
-  console.log(`[saveState][PID:${process.pid}] DB_PATH: ${DB_PATH} fecha: ${fecha} tiempo: ${tiempo_hoy} aprobadas: ${JSON.stringify(tareas_aprobadas)} estado_mision: ${estado_mision} caller: ${saveStateStack}`);
   d.prepare(
     'INSERT OR REPLACE INTO estado_actual (id, fecha, tiempo_hoy, tareas_aprobadas, estado_mision) VALUES (1, ?, ?, ?, ?)'
   ).run(fecha, tiempo_hoy, JSON.stringify(tareas_aprobadas), estado_mision);
