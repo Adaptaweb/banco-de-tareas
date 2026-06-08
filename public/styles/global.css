@@ -89,6 +89,14 @@ body.slow-device.theme-minecraft .vault-bg {
   background: url('/images/minecraft/fondo_titulo.webp') center / cover no-repeat;
 }
 
+body.slow-device.theme-fifa .fifa-scene {
+  display: none !important;
+}
+
+body.slow-device.theme-fifa .vault-bg {
+  background: url('/images/fifa/fondo_fifa_fallback.webp') center / cover no-repeat;
+}
+
 /* Portrait responsive */
 @media (orientation: portrait) and (max-width: 650px) {
   body {
@@ -387,6 +395,296 @@ body.theme-mario a:hover {
 /* Hide scan line for Minecraft (uses background image instead) */
 .theme-minecraft .vault-bg::before {
   display: none;
+}
+
+/* ==================== FIFA 2026 THEME ==================== */
+body.theme-fifa {
+  --color-bg: #0d4a2e;
+  --color-surface: rgba(21, 99, 60, 0.85);
+  --color-surface-raised: rgba(34, 126, 78, 0.9);
+  --color-gold: #ffd700;
+  --color-gold-dim: #daa520;
+  --color-text-dim: #c8e6c9;
+  --color-border: #1a5c32;
+  --radius: 6px;
+  --radius-sm: 3px;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Exo 2', system-ui, sans-serif;
+}
+
+body.theme-fifa .vault-bg {
+  background: url('/images/fifa/fondo_fifa.webp') center / cover no-repeat;
+}
+
+body.theme-fifa .vault-bg::after {
+  background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
+}
+
+body.theme-fifa .card {
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
+}
+
+body.theme-fifa .card::after {
+  display: block;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), #ffffff, var(--color-gold), transparent);
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: background 0.5s ease;
+}
+
+body.theme-fifa .btn {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(14px, 1.8dvh, 18px);
+  padding: clamp(10px, 1.8dvh, 18px) clamp(14px, 2.2dvh, 24px);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  text-shadow: none;
+  box-shadow: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+}
+
+body.theme-fifa .btn:hover:not(:disabled) {
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.2);
+  background: #0a3d22;
+  color: var(--color-gold);
+}
+
+body.theme-fifa .btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.15);
+  padding: clamp(10px, 1.8dvh, 18px) clamp(14px, 2.2dvh, 24px);
+}
+
+body.theme-fifa .btn:disabled {
+  opacity: 0.35;
+  color: var(--color-text-dim);
+  box-shadow: none;
+  background: var(--color-surface-raised);
+  filter: grayscale(0.6);
+}
+
+body.theme-fifa .vault-bg::before {
+  display: none;
+}
+
+body.theme-fifa h1, body.theme-fifa h2, body.theme-fifa h3 {
+  font-family: var(--font-display);
+  letter-spacing: 3px;
+}
+
+body.theme-fifa input, body.theme-fifa select {
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.5dvh, 17px);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+body.theme-fifa a {
+  color: var(--color-gold);
+  text-shadow: none;
+  font-weight: 600;
+}
+
+body.theme-fifa a:hover {
+  color: #ffffff;
+}
+
+/* ==================== FIFA SCENE BACKGROUND ==================== */
+
+.fifa-scene {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body.theme-fifa .fifa-scene {
+  display: block;
+}
+
+/* Floodlight towers */
+.fifa-floodlight {
+  position: absolute;
+  top: 0;
+  left: var(--left, 50%);
+  width: 6px;
+  height: 80px;
+  background: linear-gradient(to bottom, #555, #888);
+  border-radius: 0 0 3px 3px;
+}
+
+.fifa-floodlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  width: 22px;
+  height: 12px;
+  background: #666;
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 0 12px rgba(255, 255, 200, 0.6);
+}
+
+/* Light beams */
+.fifa-beam {
+  position: absolute;
+  top: 0;
+  left: var(--left, 50%);
+  width: 120px;
+  height: 60px;
+  margin-left: -60px;
+  background: linear-gradient(to bottom, rgba(255, 255, 200, 0.12), transparent);
+  clip-path: polygon(35% 0%, 65% 0%, 85% 100%, 15% 100%);
+  animation: fifa-beam-pulse 3s ease-in-out infinite alternate;
+}
+
+/* Ball */
+.fifa-ball {
+  position: absolute;
+  bottom: 200px;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  margin-left: -22px;
+  background: radial-gradient(circle at 40% 35%, #ffffff 30%, #000 30.5%, #000 45%, #fff 45.5%, #fff 55%, #000 55.5%);
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  animation: fifa-ball-spin 6s linear infinite;
+}
+
+.fifa-ball::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 60% 65%, transparent 30%, #000 30.5%, #000 45%, transparent 45.5%);
+}
+
+/* Goal posts */
+.fifa-goal {
+  position: absolute;
+  bottom: 100px;
+}
+
+.fifa-goal[style*="left"] {
+  left: 2%;
+}
+
+.fifa-goal[style*="right"] {
+  right: 2%;
+}
+
+.fifa-goal::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 4px;
+  height: 60px;
+  background: #fff;
+  border-radius: 1px;
+}
+
+.fifa-goal[style*="left"]::before {
+  left: 0;
+}
+
+.fifa-goal[style*="right"]::before {
+  right: 0;
+}
+
+.fifa-goal::after {
+  content: '';
+  position: absolute;
+  bottom: 56px;
+  height: 4px;
+  background: #fff;
+  border-radius: 1px;
+  width: 50px;
+}
+
+.fifa-goal[style*="left"]::after {
+  left: 0;
+}
+
+.fifa-goal[style*="right"]::after {
+  right: 0;
+}
+
+/* Flags */
+.fifa-flag {
+  position: absolute;
+  bottom: 160px;
+  left: var(--left, 50%);
+  width: 2px;
+  height: 40px;
+  background: #aaa;
+  border-radius: 1px;
+  animation: fifa-flag-wave 2s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+.fifa-flag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 2px;
+  width: 28px;
+  height: 18px;
+  background: linear-gradient(135deg, #ffd700 25%, #daa520 25%, #daa520 50%, #ffd700 50%, #ffd700 75%, #daa520 75%);
+  border-radius: 2px;
+  clip-path: polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%);
+}
+
+/* Ground — pitch markings */
+.fifa-ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 20px,
+    rgba(255, 255, 255, 0.03) 20px,
+    rgba(255, 255, 255, 0.03) 22px
+  );
+  border-top: 2px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ==================== FIFA ANIMATIONS ==================== */
+@keyframes fifa-beam-pulse {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; }
+}
+
+@keyframes fifa-ball-spin {
+  0% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(90deg) translateY(-4px); }
+  50% { transform: rotate(180deg) translateY(0); }
+  75% { transform: rotate(270deg) translateY(-4px); }
+  100% { transform: rotate(360deg) translateY(0); }
+}
+
+@keyframes fifa-flag-wave {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(3deg); }
 }
 
 /* ==================== MARIO SCENE BACKGROUND ==================== */

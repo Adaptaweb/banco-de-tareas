@@ -128,11 +128,8 @@ export function startBot() {
         }
       }
 
-      state.estado_mision = 'aprobada';
       await ctx.editMessageText(`✅ APROBADA: ${tareaNombre}`);
-
-      const dbOk = loadState();
-      saveState(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas, dbOk.tareas_activas, 'aprobada');
+      await ctx.answerCbQuery();
     } else if (data === 'no') {
       if (hoy !== state.fecha_actual) {
         saveDailyHistory(state.fecha_actual, state.tiempo_hoy, state.tareas_aprobadas);
@@ -143,12 +140,15 @@ export function startBot() {
 
       state.estado_mision = 'rechazada';
       await ctx.editMessageText('❌ RECHAZADA');
+      await ctx.answerCbQuery();
 
       const dbNo = loadState();
       saveState(state.fecha_actual, dbNo.tiempo_hoy, dbNo.tareas_aprobadas, dbNo.tareas_activas, 'rechazada');
     }
 
-    await ctx.answerCbQuery();
+    if (data !== 'no' && !data?.startsWith('ok|')) {
+      await ctx.answerCbQuery();
+    }
   });
 
   bot.launch({ dropPendingUpdates: true });

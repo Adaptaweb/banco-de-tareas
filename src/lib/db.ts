@@ -127,11 +127,14 @@ export function saveState(
     'INSERT OR REPLACE INTO estado_actual (id, fecha, tiempo_hoy, tareas_aprobadas, estado_mision) VALUES (1, ?, ?, ?, ?)'
   ).run(fecha, tiempo_hoy, JSON.stringify(tareas_aprobadas), estado_mision);
 
-  d.prepare('DELETE FROM tareas_activas').run();
-  const insert = d.prepare('INSERT INTO tareas_activas (nombre, icono, tiempo) VALUES (?, ?, ?)');
-  for (const t of tareas_activas) {
-    insert.run(t.nombre, t.icono, t.tiempo);
-  }
+  const transaction = d.transaction(() => {
+    d.prepare('DELETE FROM tareas_activas').run();
+    const insert = d.prepare('INSERT INTO tareas_activas (nombre, icono, tiempo) VALUES (?, ?, ?)');
+    for (const t of tareas_activas) {
+      insert.run(t.nombre, t.icono, t.tiempo);
+    }
+  });
+  transaction();
 }
 
 export function addTask(nombre: string, icono: string, tiempo: number = 15) {

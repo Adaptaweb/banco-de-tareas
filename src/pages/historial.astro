@@ -484,5 +484,28 @@ const ultimos30 = Array.from({ length: 30 }, (_, i) => {
     body.theme-mario .timeline-fecha-dot {
       border-radius: 50%;
     }
+
+    body.theme-fifa .timeline-dot {
+      border-radius: 50%;
+    }
+    body.theme-fifa .timeline-dot[data-best] {
+      background: var(--color-gold);
+      box-shadow: 0 0 10px var(--color-gold);
+    }
+    body.theme-fifa .chart-bar {
+      border-radius: 3px 3px 0 0;
+    }
+    body.theme-fifa .heatmap-cell {
+      border-radius: 2px;
+    }
+    body.theme-fifa .stat-item {
+      border-radius: var(--radius-sm);
+    }
+    body.theme-fifa .timeline-content {
+      border-radius: var(--radius-sm);
+    }
+    body.theme-fifa .timeline-fecha-dot {
+      border-radius: 50%;
+    }
   </style>
 </BaseLayout>

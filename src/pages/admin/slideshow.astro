@@ -65,7 +65,9 @@ const activeCount = images.filter(i => i.active).length;
     import Swal from 'sweetalert2';
 
     function swalTheme() {
-      return document.body.classList.contains('theme-mario') ? 'swal-mario' : 'swal-minecraft';
+      if (document.body.classList.contains('theme-mario')) return 'swal-mario';
+      if (document.body.classList.contains('theme-fifa')) return 'swal-fifa';
+      return 'swal-minecraft';
     }
 
     function mostrarStatus(msg, tipo) {
@@ -433,6 +435,40 @@ const activeCount = images.filter(i => i.active).length;
 
     :global(body.theme-mario) .input-file::file-selector-button {
       border-radius: 4px;
+    }
+
+    /* FIFA theme overrides */
+    :global(body.theme-fifa) .toggle-slider {
+      border-radius: 4px;
+    }
+
+    :global(body.theme-fifa) .toggle-slider::before {
+      border-radius: 2px;
+    }
+
+    :global(body.theme-fifa) .toggle-switch input:checked + .toggle-slider {
+      background: #2d8a4e;
+      border-color: #ffd700;
+    }
+
+    :global(body.theme-fifa) .toggle-switch input:checked + .toggle-slider::before {
+      background: #ffd700;
+    }
+
+    :global(body.theme-fifa) .image-card {
+      border-radius: 4px;
+    }
+
+    :global(body.theme-fifa) .image-thumb {
+      border-radius: 3px;
+    }
+
+    :global(body.theme-fifa) .input-file {
+      border-radius: var(--radius-sm);
+    }
+
+    :global(body.theme-fifa) .input-file::file-selector-button {
+      border-radius: 3px;
     }
   </style>
 </BaseLayout>

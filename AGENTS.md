@@ -55,13 +55,16 @@ docker run -d -p 5000:5000 --env-file .env --name banco banco-de-tareas
 
 ## Themes
 
-CSS custom properties swapped via `localStorage('temaBanco')`. Two themes:
+CSS custom properties swapped via `localStorage('temaBanco')`. Three themes:
 - **minecraft** (default) — stone panels, gray beveled buttons (Minecraft Java Edition menu), Minecraftia font, panoramic background `images/minecraft/fondo_titulo.webp`. Class: `body.theme-minecraft`.
 - **mario** — red surfaces, yellow gold, Press Start 2P + Exo 2 fonts, vault grid background. Class: `body.theme-mario`.
+- **fifa** — green pitch, gold accents, Bebas Neue + Exo 2 fonts, stadium floodlights + ball decoration. Class: `body.theme-fifa`.
 
-`BaseLayout.astro` SSR renders `<body class="theme-minecraft">` — JS `aplicarTema()` in inline script clears and sets the correct class. The `:root` colors match the Minecraft theme as fallback. Mario overrides via `body.theme-mario` selectors.
+`BaseLayout.astro` SSR renders `<body class="theme-minecraft">` — JS `aplicarTema()` in inline script clears and sets the correct class. The `:root` colors match the Minecraft theme as fallback. Mario/FIFA overrides via `body.theme-mario` / `body.theme-fifa` selectors.
 
 Audio files per theme in `public/sounds/{theme}/`. Theme switching swaps audio `src` via `a.load()`.
+- FIFA expects: `fifa_click.mp3`, `fifa_goal.mp3`, `fifa_error.mp3`, `fifa_victory.mp3` in `public/sounds/fifa/`.
+- FIFA images: `fondo_fifa.webp` (animated) + `fondo_fifa_fallback.webp` (static) in `public/images/fifa/`.
 
 ## Slideshow
 

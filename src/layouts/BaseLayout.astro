@@ -14,7 +14,7 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='15' fill='%23fbd000'/%3E%3Ccircle cx='16' cy='16' r='12' fill='%231a1a2e'/%3E%3Cline x1='16' y1='16' x2='11' y2='8' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round'/%3E%3Cline x1='16' y1='16' x2='23' y2='12' stroke='%23ffffff' stroke-width='2' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='16' r='1.5' fill='%23fbd000'/%3E%3Cpolyline points='7,18 13,24 25,10' fill='none' stroke='%2355ff55' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Press+Start+2P&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/styles/global.css" />
   <title>{pageTitle}</title>
 </head>
@@ -39,6 +39,7 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
       <div class="mc-tree" style="--left:82%"></div>
       <div class="mc-ground"></div>
     </div>
+
   </div>
   <HamburgerMenu />
   <slot />
@@ -56,6 +57,12 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
         error: '/sounds/mario/mario_error.mp3',
         victory: '/sounds/mario/mario_victory.mp3',
       },
+      fifa: {
+        click: '/sounds/fifa/fifa_click.mp3',
+        coin: '/sounds/fifa/fifa_goal.mp3',
+        error: '/sounds/fifa/fifa_error.mp3',
+        victory: '/sounds/fifa/fifa_victory.mp3',
+      },
     };
 
     const savedTheme = localStorage.getItem('temaBanco') || 'minecraft';
@@ -63,6 +70,7 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
     function aplicarTema(tema) {
       document.body.className = '';
       if (tema === 'mario') document.body.classList.add('theme-mario');
+      else if (tema === 'fifa') document.body.classList.add('theme-fifa');
       else document.body.classList.add('theme-minecraft');
       localStorage.setItem('temaBanco', tema);
 

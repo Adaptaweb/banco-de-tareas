@@ -107,7 +107,9 @@ const db = loadState();
     import { openEmojiPicker } from '../components/EmojiPicker';
 
     function swalTheme() {
-      return document.body.classList.contains('theme-mario') ? 'swal-mario' : 'swal-minecraft';
+      if (document.body.classList.contains('theme-mario')) return 'swal-mario';
+      if (document.body.classList.contains('theme-fifa')) return 'swal-fifa';
+      return 'swal-minecraft';
     }
 
     window.quitarTarea = function(nombre) {
@@ -739,6 +741,10 @@ const db = loadState();
       border-radius: 6px;
     }
 
+    body.theme-fifa .ha-select {
+      border-radius: 4px;
+    }
+
     .ha-btn-delete {
       display: inline-flex;
       align-items: center;
@@ -759,6 +765,10 @@ const db = loadState();
 
     body.theme-mario .ha-btn-delete {
       border-radius: 6px;
+    }
+
+    body.theme-fifa .ha-btn-delete {
+      border-radius: 4px;
     }
 
     .ha-btn-delete:hover {
@@ -881,6 +891,15 @@ const db = loadState();
       border-radius: 6px;
     }
 
+    body.theme-fifa .emoji-picker-popover {
+      border-radius: var(--radius);
+    }
+
+    body.theme-fifa .emoji-picker-tab,
+    body.theme-fifa .emoji-picker-option {
+      border-radius: var(--radius-sm);
+    }
+
     /* ===== SweetAlert2 Minecraft Theme ===== */
     .swal-minecraft {
       background: #2d2d2d !important;
@@ -990,6 +1009,61 @@ const db = loadState();
     }
     .swal-btn-cancel:hover {
       background: #888888 !important;
+    }
+
+    /* ===== SweetAlert2 FIFA Theme ===== */
+    .swal-fifa {
+      background: linear-gradient(135deg, #0d4a2e, #15633c) !important;
+      border: 2px solid #ffd700 !important;
+      border-radius: 8px !important;
+      box-shadow: 0 8px 32px rgba(255, 215, 0, 0.15) !important;
+      padding: 24px !important;
+    }
+    .swal-fifa .swal2-title {
+      font-family: 'Bebas Neue', sans-serif !important;
+      font-size: 1.4rem !important;
+      color: #ffd700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 3px !important;
+      padding: 0 !important;
+      margin-bottom: 12px !important;
+    }
+    .swal-fifa .swal2-html-container {
+      font-family: 'Exo 2', system-ui, sans-serif !important;
+      font-size: 0.85rem !important;
+      color: #ffffff !important;
+      font-weight: 600 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .swal-fifa .swal2-icon.swal2-warning {
+      border-color: #ffd700 !important;
+      color: #ffd700 !important;
+      margin-bottom: 12px !important;
+    }
+
+    body.theme-fifa .swal-btn-confirm {
+      background: #ffd700 !important;
+      border: 1px solid #daa520 !important;
+      border-radius: 4px !important;
+      color: #0d4a2e !important;
+      box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3) !important;
+      font-weight: 700 !important;
+    }
+    body.theme-fifa .swal-btn-confirm:hover {
+      background: #daa520 !important;
+      transform: translateY(-1px) !important;
+    }
+    body.theme-fifa .swal-btn-cancel {
+      background: #1a5c32 !important;
+      border: 1px solid #2d8a4e !important;
+      border-radius: 4px !important;
+      color: #c8e6c9 !important;
+      box-shadow: none !important;
+    }
+    body.theme-fifa .swal-btn-cancel:hover {
+      background: #2d8a4e !important;
+      color: #fff !important;
     }
 
     body.theme-mario .swal-btn-confirm {

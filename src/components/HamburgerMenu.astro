@@ -276,4 +276,25 @@ const currentPath = Astro.url.pathname;
   :global(body.theme-mario) .ham-link.active::after {
     color: var(--color-gold);
   }
+
+  :global(body.theme-fifa) .hamburger-btn {
+    border-radius: var(--radius-sm);
+  }
+
+  :global(body.theme-fifa) .ham-line {
+    border-radius: 2px;
+  }
+
+  :global(body.theme-fifa) .ham-drawer {
+    border-radius: 0 var(--radius) 0 0;
+    background: rgba(21, 99, 60, 0.95);
+  }
+
+  :global(body.theme-fifa) .ham-link {
+    border-radius: var(--radius-sm);
+  }
+
+  :global(body.theme-fifa) .ham-link.active::after {
+    color: var(--color-gold);
+  }
 </style>
