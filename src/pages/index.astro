@@ -248,7 +248,7 @@ const total = tareas.length;
     window.reintentarTarea = function() {
       if (pollTimer) clearInterval(pollTimer);
       pollTimer = null;
-      fetch('/api/estado-reset').then(() => { location.reload(); });
+      fetch('/api/reintentar').then(() => { location.reload(); });
     }
     function detenerPoll() {
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
