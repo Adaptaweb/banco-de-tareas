@@ -16,9 +16,13 @@ services:
     restart: unless-stopped
     volumes:
       - type: bind
-        source: /DATA/AppData/BancoTareas
-        target: /app
+        source: /DATA/AppData/BancoTareas/data
+        target: /app/data
+      - type: bind
+        source: /DATA/AppData/BancoTareas/slideshow
+        target: /app/public/slideshow
     environment:
+      - DATA_DIR=/app/data
       - TELEGRAM_TOKEN=poner_token_aqui
       - TELEGRAM_CHAT_ID=poner_chat_id_aqui
       - HA_IP=192.168.1.x

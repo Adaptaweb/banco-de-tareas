@@ -46,29 +46,34 @@ docker build -t banco-de-tareas .
 docker run -d -p 5000:5000 --env-file .env --name banco banco-de-tareas
 ```
 
-## Deploy en Casa OS (Raspberry Pi)
+## Deploy en Raspberry Pi 5 (Pi OS) + CasaOS
+
+Requiere Docker con el plugin `docker compose` (si CasaOS ya está instalado,
+Docker viene incluido; si no, instalar con `curl -fsSL https://get.docker.com | sh`).
 
 ```bash
-cd /home/alejandro
+cd /home/alejandro   # o la carpeta que uses
 git clone https://github.com/Adaptaweb/banco-de-tareas.git
 cd banco-de-tareas
 
-# Buildear imagen
+# Buildear imagen (nativo arm64, corre directo en la Pi)
 docker build -t banco-de-tareas:latest .
 
-# Pre-poblar bind mount con runtime files
-docker create --name temp banco-de-tareas:latest
-mkdir -p /DATA/AppData/BancoTareas
-docker cp temp:/app/. /DATA/AppData/BancoTareas/
-docker rm temp
-
-# Configurar compose en Casa OS (panel web → Custom App)
-# Editar TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, HA_IP desde la UI
+# Primer arranque
+docker compose up -d
 ```
 
-### Actualizar
+Los datos persistentes (base de datos SQLite y fotos del slideshow) viven
+en `/DATA/AppData/BancoTareas/data` y `/DATA/AppData/BancoTareas/slideshow`
+en el host — Docker crea esas carpetas solo. El resto del contenedor (código,
+`node_modules`) es descartable y se reconstruye en cada deploy, no requiere
+copiarse a mano.
 
-Usar el script `deploy.sh`:
+Para editar `TELEGRAM_TOKEN`, `TELEGRAM_CHAT_ID` y `HA_IP`: desde el panel
+de CasaOS (Custom App → variables de entorno) o directo en
+`docker-compose.yml` antes de levantar.
+
+### Actualizar
 
 ```bash
 cd /home/alejandro/banco-de-tareas
@@ -76,24 +81,9 @@ chmod +x deploy.sh
 ./deploy.sh
 ```
 
-O manualmente:
-
-```bash
-cd /home/alejandro/banco-de-tareas
-git pull
-docker build -t banco-de-tareas:latest .
-docker create --name temp_deploy banco-de-tareas:latest
-rm -rf /DATA/AppData/BancoTareas/dist/server/chunks/
-for dir in dist src node_modules public; do
-  docker cp temp_deploy:/app/"$dir" /DATA/AppData/BancoTareas/
-done
-for f in astro.config.mjs package.json package-lock.json; do
-  docker cp temp_deploy:/app/"$f" /DATA/AppData/BancoTareas/
-done
-docker rm temp_deploy
-docker compose down
-docker compose up -d
-```
+Esto hace `git pull`, reconstruye la imagen y recrea el contenedor
+conservando los datos (`docker compose up -d` detecta la imagen nueva y
+reemplaza el contenedor solo).
 
 ## Rutas principales
 

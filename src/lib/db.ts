@@ -2,13 +2,15 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
-const DB_PATH = path.resolve(process.cwd(), 'datos_cajero.db');
+const DATA_DIR = process.env.DATA_DIR || process.cwd();
+const DB_PATH = path.resolve(DATA_DIR, 'datos_cajero.db');
 const SLIDESHOW_DIR = path.resolve(process.cwd(), 'public/slideshow');
 
 let db: Database.Database;
 
 export function getDb(): Database.Database {
   if (!db) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
     db = new Database(DB_PATH);
     db.pragma('journal_mode = WAL');
     initTables();
