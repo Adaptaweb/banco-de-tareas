@@ -9,7 +9,8 @@
     "preview": "astro preview",
     "start": "concurrently \"node dist/telegram-bot.js\" \"node dist/server/entry.mjs\"",
     "start:bot": "node dist/telegram-bot.js",
-    "start:web": "node dist/server/entry.mjs"
+    "start:web": "node dist/server/entry.mjs",
+    "dev:all": "concurrently -n WEB,BOT -c blue,green \"npm:dev\" \"tsx src/telegram-bot.ts\""
   },
   "dependencies": {
     "@astrojs/node": "^9.2.0",
