@@ -687,6 +687,213 @@ body.theme-fifa .fifa-scene {
   50% { transform: rotate(3deg); }
 }
 
+/* ==================== FEDE VIGEVANI THEME ==================== */
+body.theme-fede {
+  --color-bg: #0a0e2a;
+  --color-surface: rgba(20, 10, 40, 0.82);
+  --color-surface-raised: rgba(40, 20, 70, 0.9);
+  --color-gold: #ffffff;
+  --color-gold-dim: #b8b8ff;
+  --color-emerald: #4dd0ff;
+  --color-emerald-dim: #2a8fc7;
+  --color-rose: #ff3b5c;
+  --color-rose-dim: #c4103a;
+  --color-text-dim: #c9c9e8;
+  --color-border: #2a1a5c;
+  --radius: 4px;
+  --radius-sm: 2px;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Exo 2', system-ui, sans-serif;
+}
+
+body.theme-fede .vault-bg {
+  background: #0a0e2a url('/images/fede/poster.webp') center / contain no-repeat;
+}
+
+body.theme-fede .vault-bg::after {
+  background:
+    linear-gradient(180deg, rgba(10, 10, 40, 0.55) 0%, rgba(10, 10, 40, 0.85) 100%),
+    linear-gradient(90deg, rgba(220, 20, 60, 0.25) 0%, transparent 50%, rgba(30, 80, 220, 0.25) 100%);
+}
+
+body.theme-fede .card {
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
+}
+
+body.theme-fede .card::after {
+  display: block;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--color-rose), #ffffff, var(--color-emerald), transparent);
+  border-radius: var(--radius) var(--radius) 0 0;
+  transition: background 0.5s ease;
+}
+
+body.theme-fede .btn {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: clamp(14px, 1.8dvh, 18px);
+  padding: clamp(10px, 1.8dvh, 18px) clamp(14px, 2.2dvh, 24px);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  text-shadow: none;
+  box-shadow: none;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  transition: all 0.25s ease;
+}
+
+body.theme-fede .btn:hover:not(:disabled) {
+  border-color: var(--color-emerald);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(77, 208, 255, 0.25);
+  background: #1a0f3a;
+  color: #ffffff;
+}
+
+body.theme-fede .btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(255, 59, 92, 0.2);
+  padding: clamp(10px, 1.8dvh, 18px) clamp(14px, 2.2dvh, 24px);
+}
+
+body.theme-fede .btn:disabled {
+  opacity: 0.35;
+  color: var(--color-text-dim);
+  box-shadow: none;
+  background: var(--color-surface-raised);
+  filter: grayscale(0.6);
+}
+
+body.theme-fede .vault-bg::before {
+  display: none;
+}
+
+body.theme-fede h1, body.theme-fede h2, body.theme-fede h3 {
+  font-family: var(--font-display);
+  letter-spacing: 3px;
+  text-shadow: 0 0 16px rgba(77, 208, 255, 0.5);
+}
+
+body.theme-fede input, body.theme-fede select {
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.5dvh, 17px);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+body.theme-fede a {
+  color: var(--color-emerald);
+  text-shadow: none;
+  font-weight: 600;
+}
+
+body.theme-fede a:hover {
+  color: #ffffff;
+}
+
+body.slow-device.theme-fede .fede-scene {
+  display: none !important;
+}
+
+body.slow-device.theme-fede .vault-bg {
+  background: #0a0e2a url('/images/fede/poster.webp') center / contain no-repeat;
+}
+
+/* ==================== FEDE SCENE BACKGROUND ==================== */
+
+.fede-scene {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body.theme-fede .fede-scene {
+  display: block;
+}
+
+.fede-bolt {
+  position: absolute;
+  top: -5%;
+  left: var(--left, 50%);
+  width: 6px;
+  height: 45%;
+  background: linear-gradient(180deg, #ffffff, #4dd0ff 60%, transparent);
+  clip-path: polygon(50% 0%, 100% 20%, 60% 45%, 100% 55%, 30% 100%, 45% 55%, 0% 48%, 40% 25%);
+  filter: drop-shadow(0 0 8px #4dd0ff);
+  opacity: 0;
+  animation: fede-flash 4s ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+.fede-spark {
+  position: absolute;
+  bottom: -10px;
+  left: var(--left, 50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 8px 2px rgba(77, 208, 255, 0.8);
+  animation: fede-spark-rise 6s linear infinite;
+  animation-delay: var(--delay, 0s);
+  opacity: 0;
+}
+
+/* ==================== FEDE ANIMATIONS ==================== */
+@keyframes fede-flash {
+  0%, 92%, 100% { opacity: 0; }
+  93% { opacity: 1; }
+  94% { opacity: 0.2; }
+  95% { opacity: 0.9; }
+  97% { opacity: 0; }
+}
+
+@keyframes fede-spark-rise {
+  0% { transform: translateY(0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.6; }
+  100% { transform: translateY(-100vh) scale(0.3); opacity: 0; }
+}
+
+.fede-music-toggle {
+  display: none;
+}
+
+body.theme-fede .fede-music-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  width: clamp(32px, 5dvh, 40px);
+  height: clamp(32px, 5dvh, 40px);
+  border-radius: 50%;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  color: #ffffff;
+  font-size: clamp(16px, 2dvh, 20px);
+  cursor: pointer;
+}
+
+body.theme-fede .fede-music-toggle:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 /* ==================== MARIO SCENE BACKGROUND ==================== */
 
 .mario-scene {

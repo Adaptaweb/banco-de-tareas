@@ -39,6 +39,16 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
       <div class="mc-tree" style="--left:82%"></div>
       <div class="mc-ground"></div>
     </div>
+    <div class="fede-scene">
+      <div class="fede-bolt" style="--left:15%;--delay:0s"></div>
+      <div class="fede-bolt" style="--left:72%;--delay:1.3s"></div>
+      <div class="fede-bolt" style="--left:45%;--delay:2.6s"></div>
+      <div class="fede-spark" style="--left:20%;--delay:0.4s"></div>
+      <div class="fede-spark" style="--left:58%;--delay:1.8s"></div>
+      <div class="fede-spark" style="--left:80%;--delay:0.9s"></div>
+      <div class="fede-spark" style="--left:35%;--delay:2.7s"></div>
+      <div class="fede-spark" style="--left:90%;--delay:3.4s"></div>
+    </div>
 
   </div>
   <HamburgerMenu />
@@ -63,6 +73,12 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
         error: '/sounds/fifa/fifa_error.mp3',
         victory: '/sounds/fifa/fifa_victory.mp3',
       },
+      fede: {
+        click: '/sounds/minecraft/menuclick.mp3',
+        coin: '/sounds/minecraft/moneda.mp3',
+        error: '/sounds/minecraft/error.mp3',
+        victory: '/sounds/minecraft/victory.mp3',
+      },
     };
 
     const savedTheme = localStorage.getItem('temaBanco') || 'minecraft';
@@ -71,6 +87,7 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
       document.body.className = '';
       if (tema === 'mario') document.body.classList.add('theme-mario');
       else if (tema === 'fifa') document.body.classList.add('theme-fifa');
+      else if (tema === 'fede') document.body.classList.add('theme-fede');
       else document.body.classList.add('theme-minecraft');
       localStorage.setItem('temaBanco', tema);
 
@@ -105,6 +122,7 @@ const pageTitle = Astro.props.title || 'Banco de Tareas';
       aplicarTema(tema);
       const aClic = document.getElementById('audioClic');
       if (aClic) { aClic.currentTime = 0; aClic.play().catch(() => {}); }
+      document.dispatchEvent(new CustomEvent('temaCambiado', { detail: { tema } }));
     };
   </script>
 </body>

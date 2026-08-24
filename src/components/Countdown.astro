@@ -1,0 +1,88 @@
+<div class="fede-countdown" id="fedeCountdown">
+  <div class="fede-countdown-label">EL MUNDO DE FEDE VIGEVANI — CLARO ARENA</div>
+  <div class="fede-countdown-grid">
+    <div class="fede-countdown-unit"><span id="fcDias">--</span><small>DÍAS</small></div>
+    <div class="fede-countdown-unit"><span id="fcHoras">--</span><small>HRS</small></div>
+    <div class="fede-countdown-unit"><span id="fcMin">--</span><small>MIN</small></div>
+    <div class="fede-countdown-unit"><span id="fcSeg">--</span><small>SEG</small></div>
+  </div>
+</div>
+
+<script>
+  const FEDE_FECHA = new Date('2026-12-19T19:00:00-03:00').getTime();
+
+  function actualizarFedeCountdown() {
+    const dias = document.getElementById('fcDias');
+    if (!dias) return;
+    const diff = FEDE_FECHA - Date.now();
+    if (diff <= 0) {
+      const cont = document.getElementById('fedeCountdown');
+      if (cont) cont.innerHTML = '<div class="fede-countdown-label">¡HOY ES EL SHOW!</div>';
+      return;
+    }
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    dias.textContent = String(d).padStart(2, '0');
+    document.getElementById('fcHoras').textContent = String(h).padStart(2, '0');
+    document.getElementById('fcMin').textContent = String(m).padStart(2, '0');
+    document.getElementById('fcSeg').textContent = String(s).padStart(2, '0');
+  }
+
+  actualizarFedeCountdown();
+  setInterval(actualizarFedeCountdown, 1000);
+</script>
+
+<style>
+  .fede-countdown { display: none; }
+
+  body.theme-fede .fede-countdown {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(4px, 0.8dvh, 10px);
+    margin-bottom: clamp(8px, 1.2dvh, 16px);
+  }
+
+  .fede-countdown-label {
+    font-family: var(--font-display);
+    font-size: clamp(11px, 1.4dvh, 15px);
+    color: var(--color-emerald);
+    letter-spacing: 1.5px;
+    text-align: center;
+    text-shadow: 0 0 12px rgba(77, 208, 255, 0.5);
+  }
+
+  .fede-countdown-grid {
+    display: flex;
+    gap: clamp(10px, 2dvh, 22px);
+  }
+
+  .fede-countdown-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(20, 10, 40, 0.7);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: clamp(10px, 1.8dvh, 18px) clamp(12px, 2.4dvh, 22px);
+    min-width: clamp(64px, 11dvh, 92px);
+  }
+
+  .fede-countdown-unit span {
+    font-family: var(--font-display);
+    font-size: clamp(30px, 5.5dvh, 48px);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 59, 92, 0.6);
+    line-height: 1;
+  }
+
+  .fede-countdown-unit small {
+    font-family: var(--font-body);
+    font-size: clamp(10px, 1.3dvh, 13px);
+    color: var(--color-text-dim);
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+</style>

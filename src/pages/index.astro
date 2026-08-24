@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ThemeSelector from '../components/ThemeSelector.astro';
 import Slideshow from '../components/Slideshow.astro';
+import Countdown from '../components/Countdown.astro';
 import XpBar from '../components/XpBar.astro';
 import TaskButton from '../components/TaskButton.astro';
 import { loadState } from '../lib/db';
@@ -15,12 +16,15 @@ const total = tareas.length;
 <BaseLayout title="Banco de Tareas — Matías">
   <ThemeSelector />
   <Slideshow />
+  <button id="fedeMusicToggle" class="fede-music-toggle" onclick="toggleFedeMusica()" title="Música">🔊</button>
 
   <div class="container">
     <div class="clock-display" id="reloj">
       <span class="clock-hourglass">⏳</span>
       <span class="clock-time">--:--:--</span>
     </div>
+
+    <Countdown />
 
     <div class="card">
       <XpBar
@@ -49,6 +53,7 @@ const total = tareas.length;
   <audio id="audioError" preload="none"></audio>
   <audio id="audioVictory" preload="none"></audio>
   <audio id="audioSobre" preload="none"></audio>
+  <audio id="audioFede" src="/sounds/fede/musica.mp3" preload="none" loop></audio>
 
   <script>
     let ultimoEstadoProcesado = 'esperando';
@@ -59,11 +64,42 @@ const total = tareas.length;
     const aError = document.getElementById('audioError');
     const aVictory = document.getElementById('audioVictory');
     const aSobre = document.getElementById('audioSobre');
+    const aFede = document.getElementById('audioFede');
+    const fedeToggle = document.getElementById('fedeMusicToggle');
+    let fedeAudioUnlocked = false;
     window.sonarHover = function() { aClic.currentTime = 0; aClic.play().catch(() => {}); }
+    if (aFede) {
+      aFede.volume = 0.4;
+      aFede.addEventListener('error', () => {
+        if (fedeToggle) { fedeToggle.disabled = true; fedeToggle.title = 'Música no disponible'; }
+      });
+    }
+    function actualizarFedeMusica(tema) {
+      if (!aFede) return;
+      if (tema === 'fede') {
+        const muted = localStorage.getItem('fedeMusicMuted') === '1';
+        aFede.muted = muted;
+        if (fedeToggle) fedeToggle.textContent = muted ? '🔇' : '🔊';
+        if (fedeAudioUnlocked && !muted) aFede.play().catch(() => {});
+      } else {
+        aFede.pause();
+      }
+    }
+    window.toggleFedeMusica = function() {
+      if (!aFede) return;
+      const muted = !(localStorage.getItem('fedeMusicMuted') === '1');
+      localStorage.setItem('fedeMusicMuted', muted ? '1' : '0');
+      aFede.muted = muted;
+      if (fedeToggle) fedeToggle.textContent = muted ? '🔇' : '🔊';
+      if (!muted && fedeAudioUnlocked) aFede.play().catch(() => {});
+    }
+    document.addEventListener('temaCambiado', (e) => actualizarFedeMusica(e.detail.tema));
     function habilitarAudio() {
       [aClic, aMoneda, aError, aVictory, aSobre].forEach(a => {
         a.muted = true; a.play().then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(() => {});
       });
+      fedeAudioUnlocked = true;
+      actualizarFedeMusica(document.body.classList.contains('theme-fede') ? 'fede' : 'otro');
       document.removeEventListener('click', habilitarAudio);
       document.removeEventListener('touchstart', habilitarAudio);
     }
